@@ -179,6 +179,7 @@ budget-manager/
 - [x] Tailwind CSS v4 setup
 - [x] Shadcn UI integration
 - [x] Appwrite SDK configuration
+- [x] Appwrite database setup
 - [x] React Query setup
 - [x] Authentication system (login, signup, logout)
 - [x] Protected routes
@@ -255,7 +256,7 @@ npm run lint
 
 ## 🤝 Contributing Guidelines
 
-1. Follow the existing code style
+1. Follow the existing code style, always use shadcn UI components first.
 2. Use TypeScript for type safety
 3. Write meaningful commit messages
 4. Test authentication flows before committing
