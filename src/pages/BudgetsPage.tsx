@@ -36,7 +36,7 @@ export default function BudgetsPage() {
   const { data: transactions } = useTransactions(activeFamilyId ?? undefined);
 
   const createBudget = useCreateBudget();
-  const deleteBudget = useDeleteBudget(activeFamilyId);
+  const deleteBudget = useDeleteBudget(activeFamilyId ?? undefined);
 
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");

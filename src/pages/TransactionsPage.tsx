@@ -61,7 +61,7 @@ export default function TransactionsPage() {
 
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
-  const deleteTransaction = useDeleteTransaction(activeFamilyId);
+  const deleteTransaction = useDeleteTransaction(activeFamilyId ?? undefined);
   const createTag = useCreateTag();
 
   const [editingId, setEditingId] = useState<string | null>(null);

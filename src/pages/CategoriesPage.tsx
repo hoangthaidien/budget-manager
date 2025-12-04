@@ -29,7 +29,7 @@ export default function CategoriesPage() {
     activeFamilyId ?? undefined,
   );
   const createCategory = useCreateCategory();
-  const deleteCategory = useDeleteCategory(activeFamilyId);
+  const deleteCategory = useDeleteCategory(activeFamilyId ?? undefined);
 
   const [nameEn, setNameEn] = useState("");
   const [nameVi, setNameVi] = useState("");

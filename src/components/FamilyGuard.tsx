@@ -1,4 +1,4 @@
-import { PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import { useFamily } from "@/contexts/FamilyContext";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
