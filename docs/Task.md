@@ -18,10 +18,10 @@
 - [x] Implement Protected Routes
 
 ## Core Features
-- [ ] Dashboard Layout
-- [ ] Category Management
-- [ ] Transaction Management (CRUD)
-- [ ] Budget Management
+- [x] Dashboard Layout
+- [x] Category Management
+- [x] Transaction Management (CRUD)
+- [x] Budget Management
 
 ## UI/UX Polish
 - [ ] Responsive Design check

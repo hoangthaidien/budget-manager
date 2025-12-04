@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "Quản lý Ngân sách",
+    "welcome": "Xin chào, {{name}}",
+    "logout": "Đăng xuất",
+    "loading": "Đang tải...",
+    "currency": "đ"
+  },
+  "nav": {
+    "dashboard": "Tổng quan",
+    "transactions": "Giao dịch",
+    "budgets": "Ngân sách",
+    "categories": "Danh mục"
+  },
+  "auth": {
+    "login": {
+      "title": "Đăng nhập",
+      "subtitle": "Nhập email của bạn bên dưới để đăng nhập vào tài khoản",
+      "emailLabel": "Email",
+      "passwordLabel": "Mật khẩu",
+      "submit": "Đăng nhập",
+      "submitting": "Đang đăng nhập...",
+      "noAccount": "Chưa có tài khoản?",
+      "signupLink": "Đăng ký"
+    },
+    "signup": {
+      "title": "Tạo tài khoản",
+      "subtitle": "Nhập email của bạn bên dưới để tạo tài khoản",
+      "nameLabel": "Tên",
+      "emailLabel": "Email",
+      "passwordLabel": "Mật khẩu",
+      "confirmPasswordLabel": "Xác nhận mật khẩu",
+      "submit": "Đăng ký",
+      "submitting": "Đang tạo tài khoản...",
+      "hasAccount": "Đã có tài khoản?",
+      "loginLink": "Đăng nhập",
+      "passwordMismatch": "Mật khẩu không khớp"
+    }
+  },
+  "dashboard": {
+    "totalBalance": "Tổng số dư",
+    "monthlyIncome": "Thu nhập tháng",
+    "monthlyExpenses": "Chi tiêu tháng",
+    "welcomeTitle": "Chào mừng đến với Quản lý Ngân sách",
+    "welcomeMessage": "Bảng điều khiển của bạn đã sẵn sàng. Bắt đầu bằng cách thêm danh mục và giao dịch để theo dõi ngân sách của bạn."
+  },
+  "categories": {
+    "title": "Danh mục",
+    "addTitle": "Thêm danh mục",
+    "nameLabel": "Tên",
+    "typeLabel": "Loại",
+    "income": "Thu nhập",
+    "expense": "Chi tiêu",
+    "submit": "Thêm danh mục",
+    "submitting": "Đang thêm...",
+    "emptyIncome": "Chưa có danh mục thu nhập.",
+    "emptyExpense": "Chưa có danh mục chi tiêu.",
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa danh mục này không?"
+  },
+  "transactions": {
+    "title": "Giao dịch",
+    "addTitle": "Thêm giao dịch",
+    "amountLabel": "Số tiền",
+    "categoryLabel": "Danh mục",
+    "selectCategory": "Chọn danh mục",
+    "dateLabel": "Ngày",
+    "descriptionLabel": "Mô tả (Tùy chọn)",
+    "submit": "Thêm giao dịch",
+    "submitting": "Đang thêm...",
+    "recentTitle": "Giao dịch gần đây",
+    "empty": "Không tìm thấy giao dịch nào. Hãy bắt đầu bằng cách thêm một giao dịch!",
+    "noCategories": "Không tìm thấy danh mục {{type}} nào. Vui lòng thêm một số trong trang Danh mục.",
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa giao dịch này không?"
+  },
+  "budgets": {
+    "title": "Ngân sách",
+    "setBudgetTitle": "Thiết lập ngân sách",
+    "limitAmountLabel": "Hạn mức",
+    "periodLabel": "Kỳ hạn",
+    "periods": {
+      "monthly": "Hàng tháng",
+      "weekly": "Hàng tuần",
+      "yearly": "Hàng năm"
+    },
+    "submit": "Thiết lập ngân sách",
+    "submitting": "Đang lưu...",
+    "empty": "Chưa thiết lập ngân sách. Tạo một ngân sách để bắt đầu theo dõi giới hạn chi tiêu của bạn.",
+    "spent": "đã chi",
+    "limit": "hạn mức",
+    "used": "đã dùng",
+    "remaining": "còn lại",
+    "overBudget": "Vượt ngân sách",
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa ngân sách này không?"
+  },
+  "common": {
+    "unknownCategory": "Danh mục không xác định"
+  }
+}

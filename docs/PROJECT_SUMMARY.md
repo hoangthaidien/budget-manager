@@ -18,7 +18,7 @@ Budget Manager is a modern web application for managing personal finances, track
 ### Backend & Services
 - **Backend-as-a-Service**: Appwrite Cloud
   - Authentication
-  - Database
+  - Database (TablesDB API)
   - Real-time updates
 - **State Management**: TanStack Query (React Query) v5
 
@@ -168,9 +168,12 @@ budget-manager/
 
 | Route     | Access  | Component       | Description                    |
 |-----------|---------|-----------------|--------------------------------|
-| `/login`  | Public  | LoginPage       | User login                     |
-| `/signup` | Public  | SignupPage      | User registration              |
-| `/`       | Private | DashboardPage   | Main dashboard                 |
+| `/login`        | Public  | LoginPage        | User login                     |
+| `/signup`       | Public  | SignupPage       | User registration              |
+| `/`             | Private | DashboardPage    | Main dashboard                 |
+| `/categories`   | Private | CategoriesPage   | Manage income/expense categories |
+| `/transactions` | Private | TransactionsPage | Log income and expenses        |
+| `/budgets`      | Private | BudgetsPage      | Set and track spending limits  |
 
 ## ✨ Features Roadmap
 
@@ -184,12 +187,14 @@ budget-manager/
 - [x] Authentication system (login, signup, logout)
 - [x] Protected routes
 - [x] Basic dashboard layout
+- [x] Category management (CRUD)
+- [x] Transaction management (CRUD)
+- [x] Budget tracking and alerts
+- [x] Dashboard with summary cards (Real data)
+- [x] Internationalization (i18n) - English & Vietnamese
+- [x] Dynamic currency formatting ($ / đ)
 
 ### 🚧 In Progress / Planned
-- [ ] Category management (CRUD)
-- [ ] Transaction management (CRUD)
-- [ ] Budget tracking and alerts
-- [ ] Dashboard with summary cards
 - [ ] Income vs Expense charts
 - [ ] Transaction filtering and search
 - [ ] Dark/Light theme toggle
@@ -238,6 +243,8 @@ npm run lint
 | @tailwindcss/vite          | ^4.1.17 | Tailwind Vite plugin           |
 | lucide-react               | ^0.554.0| Icon library                   |
 | recharts                   | ^3.5.0  | Charts & data visualization    |
+| i18next                    | latest  | Internationalization framework |
+| react-i18next              | latest  | React bindings for i18next     |
 
 ## 🔒 Security Considerations
 
@@ -292,4 +299,4 @@ For issues or questions, refer to:
 ---
 
 **Last Updated**: November 26, 2025  
-**Version**: 0.1.0 (Initial Setup)
+**Version**: 0.2.0 (Core Features & i18n)

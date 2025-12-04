@@ -1,9 +1,13 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import LoginPage from '@/pages/LoginPage';
-import SignupPage from '@/pages/SignupPage';
-import DashboardPage from '@/pages/DashboardPage';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import LoginPage from "@/pages/LoginPage";
+import SignupPage from "@/pages/SignupPage";
+import DashboardPage from "@/pages/DashboardPage";
+import CategoriesPage from "@/pages/CategoriesPage";
+import TransactionsPage from "@/pages/TransactionsPage";
+import BudgetsPage from "@/pages/BudgetsPage";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Layout from "@/components/Layout";
 
 function App() {
   const { user, loading } = useAuth();
@@ -18,16 +22,26 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
-      <Route path="/signup" element={user ? <Navigate to="/" replace /> : <SignupPage />} />
       <Route
-        path="/"
+        path="/login"
+        element={user ? <Navigate to="/" replace /> : <LoginPage />}
+      />
+      <Route
+        path="/signup"
+        element={user ? <Navigate to="/" replace /> : <SignupPage />}
+      />
+      <Route
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <Layout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/transactions" element={<TransactionsPage />} />
+        <Route path="/budgets" element={<BudgetsPage />} />
+        <Route path="/categories" element={<CategoriesPage />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
