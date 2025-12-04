@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFamily } from "@/contexts/FamilyContext";
 import {
   useCategories,
   useCreateCategory,
@@ -23,18 +24,22 @@ import {
 export default function CategoriesPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
-  const { data: categories, isLoading } = useCategories(user?.$id);
+  const { activeFamilyId, isOwnerOfActiveFamily } = useFamily();
+  const { data: categories, isLoading } = useCategories(
+    activeFamilyId ?? undefined,
+  );
   const createCategory = useCreateCategory();
-  const deleteCategory = useDeleteCategory();
+  const deleteCategory = useDeleteCategory(activeFamilyId);
 
   const [nameEn, setNameEn] = useState("");
   const [nameVi, setNameVi] = useState("");
   const [newCategoryType, setNewCategoryType] =
     useState<TransactionType>("expense");
+  const isFormDisabled = !activeFamilyId;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.$id || !nameEn.trim()) return;
+    if (!user?.$id || !activeFamilyId || !nameEn.trim()) return;
 
     try {
       const localizedName = createLocalizedString({
@@ -45,7 +50,8 @@ export default function CategoriesPage() {
       await createCategory.mutateAsync({
         name: localizedName,
         type: newCategoryType,
-        user_id: user.$id,
+        family_id: activeFamilyId,
+        created_by: user.$id,
         icon: "default", // Placeholder for now
       });
       setNameEn("");
@@ -57,6 +63,7 @@ export default function CategoriesPage() {
 
   const handleDelete = async (id: string) => {
     try {
+      if (!isOwnerOfActiveFamily) return;
       await deleteCategory.mutateAsync(id);
     } catch (error) {
       console.error("Failed to delete category:", error);
@@ -65,6 +72,17 @@ export default function CategoriesPage() {
 
   if (isLoading) {
     return <div className="p-8 text-center">{t("app.loading")}</div>;
+  }
+
+  if (!activeFamilyId) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        {t(
+          "categories.familyRequiredMessage",
+          "Select or create a family to manage categories.",
+        )}
+      </div>
+    );
   }
 
   const incomeCategories = categories?.filter((c) => c.type === "income") || [];
@@ -92,6 +110,7 @@ export default function CategoriesPage() {
                   placeholder="e.g. Groceries"
                   value={nameEn}
                   onChange={(e) => setNameEn(e.target.value)}
+                  disabled={isFormDisabled}
                   required
                 />
               </div>
@@ -103,6 +122,7 @@ export default function CategoriesPage() {
                   placeholder="e.g. Ăn uống"
                   value={nameVi}
                   onChange={(e) => setNameVi(e.target.value)}
+                  disabled={isFormDisabled}
                 />
               </div>
 
@@ -116,13 +136,21 @@ export default function CategoriesPage() {
                   className="flex gap-4"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="income" id="income" />
+                    <RadioGroupItem
+                      value="income"
+                      id="income"
+                      disabled={isFormDisabled}
+                    />
                     <Label htmlFor="income" className="cursor-pointer">
                       {t("categories.income")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="expense" id="expense" />
+                    <RadioGroupItem
+                      value="expense"
+                      id="expense"
+                      disabled={isFormDisabled}
+                    />
                     <Label htmlFor="expense" className="cursor-pointer">
                       {t("categories.expense")}
                     </Label>
@@ -133,7 +161,7 @@ export default function CategoriesPage() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={createCategory.isPending}
+                disabled={createCategory.isPending || isFormDisabled}
               >
                 {createCategory.isPending ? (
                   t("categories.submitting")
@@ -143,6 +171,14 @@ export default function CategoriesPage() {
                   </>
                 )}
               </Button>
+              {isFormDisabled && (
+                <p className="text-xs text-muted-foreground text-center">
+                  {t(
+                    "categories.familyRequiredHint",
+                    "You must select a family before adding categories.",
+                  )}
+                </p>
+              )}
             </form>
           </CardContent>
         </Card>
@@ -169,33 +205,35 @@ export default function CategoriesPage() {
                           i18n.resolvedLanguage || "en",
                         )}
                       </span>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive/90"
-                            disabled={deleteCategory.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-4" align="end">
-                          <div className="flex flex-col gap-4">
-                            <p className="text-sm font-medium">
-                              {t("categories.deleteConfirm")}
-                            </p>
+                      {isOwnerOfActiveFamily && (
+                        <Popover>
+                          <PopoverTrigger asChild>
                             <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDelete(category.$id)}
-                              className="w-full"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive/90"
+                              disabled={deleteCategory.isPending}
                             >
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-4" align="end">
+                            <div className="flex flex-col gap-4">
+                              <p className="text-sm font-medium">
+                                {t("categories.deleteConfirm")}
+                              </p>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDelete(category.$id)}
+                                className="w-full"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )}
                     </CardContent>
                   </Card>
                 ))

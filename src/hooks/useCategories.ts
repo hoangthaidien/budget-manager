@@ -3,11 +3,11 @@ import { categoriesService } from "@/services/categories";
 import { QUERY_KEYS } from "@/lib/constants";
 import type { CategoryPayload } from "@/types";
 
-export function useCategories(userId: string | undefined) {
+export function useCategories(familyId: string | undefined) {
   return useQuery({
-    queryKey: [QUERY_KEYS.CATEGORIES, userId],
-    queryFn: () => categoriesService.list(userId!),
-    enabled: !!userId,
+    queryKey: [QUERY_KEYS.CATEGORIES, familyId],
+    queryFn: () => categoriesService.list(familyId!),
+    enabled: !!familyId,
   });
 }
 
@@ -18,7 +18,7 @@ export function useCreateCategory() {
     mutationFn: (payload: CategoryPayload) => categoriesService.create(payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.CATEGORIES, variables.user_id],
+        queryKey: [QUERY_KEYS.CATEGORIES, variables.family_id],
       });
     },
   });
@@ -37,21 +37,27 @@ export function useUpdateCategory() {
     }) => categoriesService.update(id, payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.CATEGORIES, data.user_id],
+        queryKey: [QUERY_KEYS.CATEGORIES, data.family_id],
       });
     },
   });
 }
 
-export function useDeleteCategory() {
+export function useDeleteCategory(familyId?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => categoriesService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.CATEGORIES],
-      });
+      if (familyId) {
+        queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.CATEGORIES, familyId],
+        });
+      } else {
+        queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.CATEGORIES],
+        });
+      }
     },
   });
 }

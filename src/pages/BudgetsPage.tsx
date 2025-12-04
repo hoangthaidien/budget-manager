@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFamily } from "@/contexts/FamilyContext";
 import {
   useBudgets,
   useCreateBudget,
@@ -27,30 +28,35 @@ export default function BudgetsPage() {
   const { t, i18n } = useTranslation();
   const formatCurrency = useCurrencyFormatter();
   const { user } = useAuth();
-  const { data: budgets, isLoading: isLoadingBudgets } = useBudgets(user?.$id);
-  const { data: categories } = useCategories(user?.$id);
-  const { data: transactions } = useTransactions(user?.$id);
+  const { activeFamilyId, isOwnerOfActiveFamily } = useFamily();
+  const { data: budgets, isLoading: isLoadingBudgets } = useBudgets(
+    activeFamilyId ?? undefined,
+  );
+  const { data: categories } = useCategories(activeFamilyId ?? undefined);
+  const { data: transactions } = useTransactions(activeFamilyId ?? undefined);
 
   const createBudget = useCreateBudget();
-  const deleteBudget = useDeleteBudget();
+  const deleteBudget = useDeleteBudget(activeFamilyId);
 
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [period, setPeriod] = useState<BudgetPeriod>("monthly");
+  const isFormDisabled = !activeFamilyId || !user?.$id;
 
   // Filter for expense categories mostly, but let's show all for flexibility
   const availableCategories = categories || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.$id || !amount || !categoryId) return;
+    if (!user?.$id || !activeFamilyId || !amount || !categoryId) return;
 
     try {
       await createBudget.mutateAsync({
         amount: parseFloat(amount),
         category_id: categoryId,
         period,
-        user_id: user.$id,
+        family_id: activeFamilyId,
+        created_by: user.$id,
       });
       setAmount("");
       setCategoryId("");
@@ -61,6 +67,7 @@ export default function BudgetsPage() {
 
   const handleDelete = async (id: string) => {
     try {
+      if (!isOwnerOfActiveFamily) return;
       await deleteBudget.mutateAsync(id);
     } catch (error) {
       console.error("Failed to delete budget:", error);
@@ -112,6 +119,17 @@ export default function BudgetsPage() {
     return <div className="p-8 text-center">{t("app.loading")}</div>;
   }
 
+  if (!activeFamilyId) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        {t(
+          "budgets.familyRequiredMessage",
+          "Select a family to manage shared budgets.",
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <div className="flex justify-between items-center mb-8">
@@ -135,6 +153,7 @@ export default function BudgetsPage() {
                   className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
+                  disabled={isFormDisabled}
                   required
                 >
                   <option value="" disabled>
@@ -161,6 +180,7 @@ export default function BudgetsPage() {
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
+                  disabled={isFormDisabled}
                   required
                 />
               </div>
@@ -172,6 +192,7 @@ export default function BudgetsPage() {
                   className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={period}
                   onChange={(e) => setPeriod(e.target.value as BudgetPeriod)}
+                  disabled={isFormDisabled}
                 >
                   <option value="monthly">
                     {t("budgets.periods.monthly")}
@@ -184,7 +205,7 @@ export default function BudgetsPage() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={createBudget.isPending}
+                disabled={createBudget.isPending || isFormDisabled}
               >
                 {createBudget.isPending ? (
                   t("budgets.submitting")
@@ -195,6 +216,14 @@ export default function BudgetsPage() {
                 )}
               </Button>
             </form>
+            {isFormDisabled && (
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                {t(
+                  "budgets.familyRequiredHint",
+                  "You must select a family before creating budgets.",
+                )}
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -223,33 +252,36 @@ export default function BudgetsPage() {
                           {t(`budgets.periods.${budget.period}`)}
                         </p>
                       </div>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            disabled={deleteBudget.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-4" align="end">
-                          <div className="flex flex-col gap-4">
-                            <p className="text-sm font-medium">
-                              {t("budgets.deleteConfirm")}
-                            </p>
+                      {isOwnerOfActiveFamily && (
+                        <Popover>
+                          <PopoverTrigger asChild>
                             <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDelete(budget.$id)}
-                              className="w-full"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              disabled={deleteBudget.isPending}
                             >
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-4" align="end">
+                            <div className="flex flex-col gap-4">
+                              <p className="text-sm font-medium">
+                                {t("budgets.deleteConfirm")}
+                              </p>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDelete(budget.$id)}
+                                className="w-full"
+                                disabled={deleteBudget.isPending}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent>

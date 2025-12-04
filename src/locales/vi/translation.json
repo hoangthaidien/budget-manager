@@ -10,7 +10,8 @@
     "dashboard": "Tổng quan",
     "transactions": "Giao dịch",
     "budgets": "Ngân sách",
-    "categories": "Danh mục"
+    "categories": "Danh mục",
+    "family": "Gia đình"
   },
   "auth": {
     "login": {
@@ -55,7 +56,9 @@
     "submitting": "Đang thêm...",
     "emptyIncome": "Chưa có danh mục thu nhập.",
     "emptyExpense": "Chưa có danh mục chi tiêu.",
-    "deleteConfirm": "Bạn có chắc chắn muốn xóa danh mục này không?"
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa danh mục này không?",
+    "familyRequiredMessage": "Hãy chọn hoặc tạo gia đình để quản lý danh mục.",
+    "familyRequiredHint": "Bạn cần chọn một gia đình trước khi thêm danh mục."
   },
   "transactions": {
     "title": "Giao dịch",
@@ -70,7 +73,8 @@
     "recentTitle": "Giao dịch gần đây",
     "empty": "Không tìm thấy giao dịch nào. Hãy bắt đầu bằng cách thêm một giao dịch!",
     "noCategories": "Không tìm thấy danh mục {{type}} nào. Vui lòng thêm một số trong trang Danh mục.",
-    "deleteConfirm": "Bạn có chắc chắn muốn xóa giao dịch này không?"
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa giao dịch này không?",
+    "familyRequiredMessage": "Hãy chọn một gia đình để quản lý giao dịch dùng chung."
   },
   "budgets": {
     "title": "Ngân sách",
@@ -90,7 +94,47 @@
     "used": "đã dùng",
     "remaining": "còn lại",
     "overBudget": "Vượt ngân sách",
-    "deleteConfirm": "Bạn có chắc chắn muốn xóa ngân sách này không?"
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa ngân sách này không?",
+    "familyRequiredMessage": "Hãy chọn một gia đình để quản lý ngân sách dùng chung.",
+    "familyRequiredHint": "Bạn cần chọn một gia đình trước khi tạo ngân sách."
+  },
+  "families": {
+    "loading": "Đang tải không gian gia đình…",
+    "emptyState": "Bạn chưa tham gia gia đình nào.",
+    "createAction": "Tạo gia đình",
+    "switcherLabel": "Gia đình hiện tại",
+    "ownerBadge": "Chủ sở hữu",
+    "membersCount": "{{count}} thành viên",
+    "membersSummary": "{{count}} thành viên có thể truy cập ngân sách và giao dịch",
+    "selectPlaceholder": "Chọn gia đình",
+    "selectPrompt": "Hãy chọn một gia đình để xem ngân sách và giao dịch chia sẻ.",
+    "manageShort": "Quản lý",
+    "manageAction": "Quản lý gia đình",
+    "requiredTitle": "Tạo gia đình để bắt đầu",
+    "requiredDescription": "Gia đình giúp bạn chia sẻ ngân sách, giao dịch và danh mục với người thân.",
+    "selectTitle": "Chọn gia đình",
+    "selectDescription": "Hãy chọn gia đình bạn muốn làm việc trước khi tiếp tục.",
+    "settingsTitle": "Thiết lập gia đình",
+    "settingsDescription": "Tạo gia đình để chia sẻ ngân sách, danh mục và giao dịch. Quản lý những ai được cộng tác cùng bạn.",
+    "createTitle": "Tạo gia đình mới",
+    "nameLabel": "Tên gia đình",
+    "namePlaceholder": "Ví dụ: Gia đình Nguyễn",
+    "currencyLabel": "Tiền tệ mặc định (mã ISO)",
+    "currentTitle": "Gia đình của bạn",
+    "currentSubtitle": "Chọn gia đình bạn muốn quản lý bên dưới.",
+    "none": "Bạn chưa tạo gia đình nào.",
+    "membersTitle": "Thành viên gia đình",
+    "membersSubtitle": "Mời thành viên bằng mã người dùng. Thành viên có quyền chỉnh sửa giao dịch, ngân sách và danh mục.",
+    "selectFamilyPrompt": "Chọn một gia đình để quản lý thành viên.",
+    "activeLabel": "Đang quản lý",
+    "memberIdLabel": "Mã người dùng Appwrite để mời",
+    "memberIdPlaceholder": "Ví dụ: 64a0c9d1e8b1",
+    "inviting": "Đang mời…",
+    "inviteAction": "Mời thành viên",
+    "onlyOwnerCanInvite": "Chỉ chủ sở hữu gia đình mới có thể mời hoặc xóa thành viên.",
+    "loadingMembers": "Đang tải danh sách thành viên…",
+    "noMembers": "Gia đình này chưa có thành viên nào.",
+    "joinedLabel": "Tham gia"
   },
   "common": {
     "unknownCategory": "Danh mục không xác định"

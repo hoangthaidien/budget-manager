@@ -3,11 +3,11 @@ import { budgetsService } from "@/services/budgets";
 import { QUERY_KEYS } from "@/lib/constants";
 import type { BudgetPayload } from "@/types";
 
-export function useBudgets(userId: string | undefined) {
+export function useBudgets(familyId: string | undefined) {
   return useQuery({
-    queryKey: [QUERY_KEYS.BUDGETS, userId],
-    queryFn: () => budgetsService.list(userId!),
-    enabled: !!userId,
+    queryKey: [QUERY_KEYS.BUDGETS, familyId],
+    queryFn: () => budgetsService.list(familyId!),
+    enabled: !!familyId,
   });
 }
 
@@ -18,7 +18,7 @@ export function useCreateBudget() {
     mutationFn: (payload: BudgetPayload) => budgetsService.create(payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.BUDGETS, variables.user_id],
+        queryKey: [QUERY_KEYS.BUDGETS, variables.family_id],
       });
     },
   });
@@ -37,21 +37,27 @@ export function useUpdateBudget() {
     }) => budgetsService.update(id, payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.BUDGETS, data.user_id],
+        queryKey: [QUERY_KEYS.BUDGETS, data.family_id],
       });
     },
   });
 }
 
-export function useDeleteBudget() {
+export function useDeleteBudget(familyId?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => budgetsService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.BUDGETS],
-      });
+      if (familyId) {
+        queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.BUDGETS, familyId],
+        });
+      } else {
+        queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.BUDGETS],
+        });
+      }
     },
   });
 }

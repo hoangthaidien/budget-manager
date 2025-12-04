@@ -4,14 +4,11 @@ import { DATABASE_ID, COLLECTIONS } from "@/lib/constants";
 import type { Tag, TagPayload } from "@/types";
 
 export const tagsService = {
-  async list(userId: string) {
+  async list(familyId: string) {
     const response = await tablesDB.listRows<Tag>({
       databaseId: DATABASE_ID,
       tableId: COLLECTIONS.TAGS,
-      queries: [
-        Query.equal("user_id", userId),
-        Query.orderAsc("name"),
-      ],
+      queries: [Query.equal("family_id", familyId), Query.orderAsc("name")],
     });
     return response.rows;
   },

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFamily } from "@/contexts/FamilyContext";
 import {
   useTransactions,
   useCreateTransaction,
@@ -50,16 +51,17 @@ export default function TransactionsPage() {
   const { t, i18n } = useTranslation();
   const formatCurrency = useCurrencyFormatter();
   const { user } = useAuth();
+  const { activeFamilyId, isOwnerOfActiveFamily } = useFamily();
   const { data: transactions, isLoading: isLoadingTransactions } =
-    useTransactions(user?.$id);
-  const { data: categories } = useCategories(user?.$id);
-  const { data: tags } = useTags(user?.$id);
+    useTransactions(activeFamilyId ?? undefined);
+  const { data: categories } = useCategories(activeFamilyId ?? undefined);
+  const { data: tags } = useTags(activeFamilyId ?? undefined);
 
   const currentLocale = i18n.resolvedLanguage === "vi" ? vi : enUS;
 
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
-  const deleteTransaction = useDeleteTransaction();
+  const deleteTransaction = useDeleteTransaction(activeFamilyId);
   const createTag = useCreateTag();
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -69,13 +71,15 @@ export default function TransactionsPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [description, setDescription] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const isFormDisabled = !activeFamilyId;
 
   // Filter categories based on selected type
   const availableCategories = categories?.filter((c) => c.type === type) || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.$id || !amount || !categoryId || !date) return;
+    if (!user?.$id || !activeFamilyId || !amount || !categoryId || !date)
+      return;
 
     try {
       if (editingId) {
@@ -88,7 +92,8 @@ export default function TransactionsPage() {
             tags: selectedTags,
             date: date.toISOString(),
             description,
-            user_id: user.$id,
+            family_id: activeFamilyId,
+            created_by: user.$id,
           },
         });
       } else {
@@ -99,7 +104,8 @@ export default function TransactionsPage() {
           tags: selectedTags,
           date: date.toISOString(),
           description,
-          user_id: user.$id,
+          family_id: activeFamilyId,
+          created_by: user.$id,
         });
       }
 
@@ -118,12 +124,12 @@ export default function TransactionsPage() {
   };
 
   const handleCreateTag = async (name: string) => {
-    console.log("Creating tag:", name, user);
-    if (!user?.$id) return;
+    if (!user?.$id || !activeFamilyId) return;
     try {
       const newTag = await createTag.mutateAsync({
         name,
-        user_id: user.$id,
+        family_id: activeFamilyId,
+        created_by: user.$id,
       });
       setSelectedTags([...selectedTags, newTag.$id]);
     } catch (error) {
@@ -158,6 +164,7 @@ export default function TransactionsPage() {
 
   const handleDelete = async (id: string) => {
     try {
+      if (!activeFamilyId || !isOwnerOfActiveFamily) return;
       await deleteTransaction.mutateAsync(id);
     } catch (error) {
       console.error("Failed to delete transaction:", error);
@@ -178,6 +185,17 @@ export default function TransactionsPage() {
 
   if (isLoadingTransactions) {
     return <div className="p-8 text-center">{t("app.loading")}</div>;
+  }
+
+  if (!activeFamilyId) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        {t(
+          "transactions.familyRequiredMessage",
+          "Select a family to manage shared transactions.",
+        )}
+      </div>
+    );
   }
 
   return (
@@ -236,6 +254,7 @@ export default function TransactionsPage() {
                     onValueChange={(values) => {
                       setAmount(values.value);
                     }}
+                    disabled={isFormDisabled}
                     required
                   />
                 </div>
@@ -470,33 +489,41 @@ export default function TransactionsPage() {
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                disabled={deleteTransaction.isPending}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-4" align="end">
-                              <div className="flex flex-col gap-4">
-                                <p className="text-sm font-medium">
-                                  {t("transactions.deleteConfirm")}
-                                </p>
+                          {isOwnerOfActiveFamily && (
+                            <Popover>
+                              <PopoverTrigger asChild>
                                 <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => handleDelete(transaction.$id)}
-                                  className="w-full"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                  disabled={deleteTransaction.isPending}
                                 >
-                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-auto p-4"
+                                align="end"
+                              >
+                                <div className="flex flex-col gap-4">
+                                  <p className="text-sm font-medium">
+                                    {t("transactions.deleteConfirm")}
+                                  </p>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleDelete(transaction.$id)
+                                    }
+                                    className="w-full"
+                                    disabled={deleteTransaction.isPending}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
                         </div>
                       </div>
                     </div>

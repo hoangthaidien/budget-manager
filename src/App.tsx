@@ -8,6 +8,8 @@ import TransactionsPage from "@/pages/TransactionsPage";
 import BudgetsPage from "@/pages/BudgetsPage";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Layout from "@/components/Layout";
+import FamilyGuard from "@/components/FamilyGuard";
+import FamilySettingsPage from "@/pages/FamilySettingsPage";
 
 function App() {
   const { user, loading } = useAuth();
@@ -37,10 +39,39 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/transactions" element={<TransactionsPage />} />
-        <Route path="/budgets" element={<BudgetsPage />} />
-        <Route path="/categories" element={<CategoriesPage />} />
+        <Route
+          path="/"
+          element={
+            <FamilyGuard>
+              <DashboardPage />
+            </FamilyGuard>
+          }
+        />
+        <Route
+          path="/transactions"
+          element={
+            <FamilyGuard>
+              <TransactionsPage />
+            </FamilyGuard>
+          }
+        />
+        <Route
+          path="/budgets"
+          element={
+            <FamilyGuard>
+              <BudgetsPage />
+            </FamilyGuard>
+          }
+        />
+        <Route
+          path="/categories"
+          element={
+            <FamilyGuard>
+              <CategoriesPage />
+            </FamilyGuard>
+          }
+        />
+        <Route path="/settings/family" element={<FamilySettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

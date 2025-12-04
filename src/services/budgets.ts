@@ -4,12 +4,12 @@ import { DATABASE_ID, COLLECTIONS } from "@/lib/constants";
 import type { Budget, BudgetPayload } from "@/types";
 
 export const budgetsService = {
-  async list(userId: string) {
+  async list(familyId: string) {
     const response = await tablesDB.listRows<Budget>({
       databaseId: DATABASE_ID,
       tableId: COLLECTIONS.BUDGETS,
       queries: [
-        Query.equal("user_id", [userId, "test-user-123"]),
+        Query.equal("family_id", familyId),
         Query.orderDesc("$createdAt"),
       ],
     });

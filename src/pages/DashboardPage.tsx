@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useFamily } from "@/contexts/FamilyContext";
 import { useTransactions } from "@/hooks/useTransactions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
@@ -10,8 +10,10 @@ import { vi, enUS } from "date-fns/locale";
 export default function DashboardPage() {
   const { t, i18n } = useTranslation();
   const formatCurrency = useCurrencyFormatter();
-  const { user } = useAuth();
-  const { data: transactions, isLoading } = useTransactions(user?.$id);
+  const { activeFamilyId } = useFamily();
+  const { data: transactions, isLoading } = useTransactions(
+    activeFamilyId ?? undefined,
+  );
 
   const [date, setDate] = useState<Date | undefined>(new Date());
   const currentLocale = i18n.resolvedLanguage === "vi" ? vi : enUS;
@@ -58,6 +60,17 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return <div className="p-8 text-center">{t("app.loading")}</div>;
+  }
+
+  if (!activeFamilyId) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        {t(
+          "families.selectFamilyPrompt",
+          "Select a family to manage your shared budgets.",
+        )}
+      </div>
+    );
   }
 
   return (

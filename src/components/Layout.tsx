@@ -2,18 +2,32 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import FamilySwitcher from "@/components/FamilySwitcher";
 import {
   LayoutDashboard,
   Tags,
   LogOut,
   ArrowRightLeft,
   PieChart,
+  User,
+  Globe,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "@/components/ui/dropdown-menu";
 
 export default function Layout() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const location = useLocation();
 
@@ -34,6 +48,11 @@ export default function Layout() {
     },
     { href: "/budgets", label: t("nav.budgets"), icon: PieChart },
     { href: "/categories", label: t("nav.categories"), icon: Tags },
+  ];
+
+  const languages = [
+    { code: "en", label: "English" },
+    { code: "vi", label: "Tiếng Việt" },
   ];
 
   return (
@@ -72,18 +91,58 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-4">
-            <LanguageSwitcher />
-            <span className="hidden sm:inline-block text-sm text-muted-foreground">
-              {user?.name}
-            </span>
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              size="icon"
-              title={t("app.logout")}
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
+            <div className="hidden lg:block w-72">
+              <FamilySwitcher />
+            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <User className="h-5 w-5" />
+                  <span className="sr-only">User menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {user?.name}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Globe className="mr-2 h-4 w-4" />
+                    <span>{t("Language", { defaultValue: "Language" })}</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {languages.map((lang) => (
+                      <DropdownMenuItem
+                        key={lang.code}
+                        onClick={() => i18n.changeLanguage(lang.code)}
+                      >
+                        <span>{lang.label}</span>
+                        {i18n.language === lang.code && (
+                          <Check className="ml-auto h-4 w-4" />
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>{t("app.logout")}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </nav>

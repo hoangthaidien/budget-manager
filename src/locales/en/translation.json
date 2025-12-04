@@ -10,7 +10,8 @@
     "dashboard": "Dashboard",
     "transactions": "Transactions",
     "budgets": "Budgets",
-    "categories": "Categories"
+    "categories": "Categories",
+    "family": "Family"
   },
   "auth": {
     "login": {
@@ -55,7 +56,9 @@
     "submitting": "Adding...",
     "emptyIncome": "No income categories yet.",
     "emptyExpense": "No expense categories yet.",
-    "deleteConfirm": "Are you sure you want to delete this category?"
+    "deleteConfirm": "Are you sure you want to delete this category?",
+    "familyRequiredMessage": "Select or create a family to manage categories.",
+    "familyRequiredHint": "You must select a family before adding categories."
   },
   "transactions": {
     "title": "Transactions",
@@ -70,7 +73,8 @@
     "recentTitle": "Recent Transactions",
     "empty": "No transactions found. Start by adding one!",
     "noCategories": "No {{type}} categories found. Please add some in the Categories page.",
-    "deleteConfirm": "Are you sure you want to delete this transaction?"
+    "deleteConfirm": "Are you sure you want to delete this transaction?",
+    "familyRequiredMessage": "Select a family to manage shared transactions."
   },
   "budgets": {
     "title": "Budgets",
@@ -90,7 +94,47 @@
     "used": "used",
     "remaining": "remaining",
     "overBudget": "Over budget by",
-    "deleteConfirm": "Are you sure you want to delete this budget?"
+    "deleteConfirm": "Are you sure you want to delete this budget?",
+    "familyRequiredMessage": "Select a family to manage shared budgets.",
+    "familyRequiredHint": "You must select a family before creating budgets."
+  },
+  "families": {
+    "loading": "Loading family context…",
+    "emptyState": "You are not part of any family yet.",
+    "createAction": "Create a Family",
+    "switcherLabel": "Current family",
+    "ownerBadge": "Owner",
+    "membersCount": "{{count}} members",
+    "membersSummary": "{{count}} members can access budgets & transactions",
+    "selectPlaceholder": "Select family",
+    "selectPrompt": "Choose a family to view shared budgets and transactions.",
+    "manageShort": "Manage",
+    "manageAction": "Manage families",
+    "requiredTitle": "Create a family to get started",
+    "requiredDescription": "Families let you share budgets, transactions, and categories with people you trust.",
+    "selectTitle": "Select a family",
+    "selectDescription": "Choose which family you want to work with before continuing.",
+    "settingsTitle": "Family settings",
+    "settingsDescription": "Create families to share budgets, categories, and transactions. Manage which members can collaborate with you.",
+    "createTitle": "Create a new family",
+    "nameLabel": "Family name",
+    "namePlaceholder": "e.g. Nguyen household",
+    "currencyLabel": "Default currency (ISO code)",
+    "currentTitle": "Your families",
+    "currentSubtitle": "Select the family you want to manage below.",
+    "none": "You haven’t created any families yet.",
+    "membersTitle": "Family members",
+    "membersSubtitle": "Invite members using their user ID. Members inherit edit access for transactions, budgets, and categories.",
+    "selectFamilyPrompt": "Select a family to manage members.",
+    "activeLabel": "Managing",
+    "memberIdLabel": "Appwrite user ID to invite",
+    "memberIdPlaceholder": "e.g. 64a0c9d1e8b1",
+    "inviting": "Inviting…",
+    "inviteAction": "Invite member",
+    "onlyOwnerCanInvite": "Only the family owner can invite or remove members.",
+    "loadingMembers": "Loading members…",
+    "noMembers": "No members found for this family yet.",
+    "joinedLabel": "Joined"
   },
   "common": {
     "unknownCategory": "Unknown Category"

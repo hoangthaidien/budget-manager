@@ -2,7 +2,7 @@
 
 ## 📋 Project Overview
 
-Budget Manager is a modern web application for managing personal finances, tracking income and expenses, and monitoring budgets. Built with a focus on user experience and data visualization, it follows the standards of popular budget management apps like Mint and YNAB.
+Budget Manager is a modern web application for managing personal finances, tracking income and expenses, and monitoring budgets. Built with a focus on user experience and data visualization, it follows the standards of popular budget management apps like Mint and YNAB. The platform now supports multi-user Family workspaces so households can collaborate on shared budgets, categories, and transactions with role-based permissions.
 
 ## 🛠️ Tech Stack
 
@@ -95,31 +95,49 @@ budget-manager/
 
 ### Collections
 
-#### 1. Categories
-| Field     | Type   | Required | Description                    |
-|-----------|--------|----------|--------------------------------|
-| name      | string | Yes      | Category name                  |
-| type      | string | Yes      | 'income' or 'expense'          |
-| icon      | string | No       | Icon identifier                |
-| user_id   | string | Yes      | Owner user ID                  |
+#### 1. Families
+| Field     | Type   | Required | Description                                 |
+|-----------|--------|----------|---------------------------------------------|
+| name      | string | Yes      | Display name for the family workspace       |
+| owner_id  | string | Yes      | Appwrite user ID of the family creator      |
+| currency  | string | No       | Optional ISO currency code (defaults to USD)|
 
-#### 2. Transactions
-| Field        | Type     | Required | Description                    |
-|--------------|----------|----------|--------------------------------|
-| amount       | double   | Yes      | Transaction amount             |
-| type         | string   | Yes      | 'income' or 'expense'          |
-| category_id  | relation | Yes      | Link to Categories             |
-| date         | datetime | Yes      | Transaction date               |
-| description  | string   | No       | Optional note                  |
-| user_id      | string   | Yes      | Owner user ID                  |
+#### 2. Family Members
+| Field      | Type     | Required | Description                                       |
+|------------|----------|----------|---------------------------------------------------|
+| family_id  | relation | Yes      | Link to the Families collection                   |
+| user_id    | string   | Yes      | Appwrite user ID of the member                    |
+| role       | string   | Yes      | 'owner' or 'member' (only owners can delete data) |
 
-#### 3. Budgets
-| Field       | Type     | Required | Description                    |
-|-------------|----------|----------|--------------------------------|
-| category_id | relation | Yes      | Link to Categories             |
-| amount      | double   | Yes      | Budget limit                   |
-| period      | string   | Yes      | Default: 'monthly'             |
-| user_id     | string   | Yes      | Owner user ID                  |
+#### 3. Categories
+| Field      | Type     | Required | Description                                    |
+|------------|----------|----------|------------------------------------------------|
+| name       | string   | Yes      | Category name                                  |
+| type       | string   | Yes      | 'income' or 'expense'                          |
+| icon       | string   | No       | Icon identifier                                |
+| family_id  | relation | Yes      | Family workspace that owns the category        |
+| created_by | string   | Yes      | User ID of the member who created the category |
+
+#### 4. Transactions
+| Field        | Type     | Required | Description                                          |
+|--------------|----------|----------|------------------------------------------------------|
+| amount       | double   | Yes      | Transaction amount                                   |
+| type         | string   | Yes      | 'income' or 'expense'                                |
+| category_id  | relation | Yes      | Link to Categories                                   |
+| tags         | array    | No       | Optional list of tag IDs                             |
+| date         | datetime | Yes      | Transaction date                                     |
+| description  | string   | No       | Optional note                                        |
+| family_id    | relation | Yes      | Family workspace where the transaction belongs       |
+| created_by   | string   | Yes      | User ID of the member who created/edited the record  |
+
+#### 5. Budgets
+| Field       | Type     | Required | Description                                          |
+|-------------|----------|----------|------------------------------------------------------|
+| category_id | relation | Yes      | Link to Categories                                   |
+| amount      | double   | Yes      | Budget limit                                         |
+| period      | string   | Yes      | Default: 'monthly'                                   |
+| family_id   | relation | Yes      | Family workspace that owns the budget                |
+| created_by  | string   | Yes      | User ID of the member who created/managed the budget |
 
 ## 🚀 Getting Started
 

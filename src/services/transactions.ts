@@ -4,12 +4,12 @@ import { DATABASE_ID, COLLECTIONS } from "@/lib/constants";
 import type { Transaction, TransactionPayload } from "@/types";
 
 export const transactionsService = {
-  async list(userId: string) {
+  async list(familyId: string) {
     const response = await tablesDB.listRows<Transaction>({
       databaseId: DATABASE_ID,
       tableId: COLLECTIONS.TRANSACTIONS,
       queries: [
-        Query.equal("user_id", [userId, "test-user-123"]),
+        Query.equal("family_id", familyId),
         Query.orderDesc("date"),
         Query.orderDesc("$createdAt"),
       ],

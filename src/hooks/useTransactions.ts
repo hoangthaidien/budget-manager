@@ -3,11 +3,11 @@ import { transactionsService } from "@/services/transactions";
 import { QUERY_KEYS } from "@/lib/constants";
 import type { TransactionPayload } from "@/types";
 
-export function useTransactions(userId: string | undefined) {
+export function useTransactions(familyId: string | undefined) {
   return useQuery({
-    queryKey: [QUERY_KEYS.TRANSACTIONS, userId],
-    queryFn: () => transactionsService.list(userId!),
-    enabled: !!userId,
+    queryKey: [QUERY_KEYS.TRANSACTIONS, familyId],
+    queryFn: () => transactionsService.list(familyId!),
+    enabled: !!familyId,
   });
 }
 
@@ -19,7 +19,7 @@ export function useCreateTransaction() {
       transactionsService.create(payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.TRANSACTIONS, variables.user_id],
+        queryKey: [QUERY_KEYS.TRANSACTIONS, variables.family_id],
       });
     },
   });
@@ -38,21 +38,27 @@ export function useUpdateTransaction() {
     }) => transactionsService.update(id, payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.TRANSACTIONS, data.user_id],
+        queryKey: [QUERY_KEYS.TRANSACTIONS, data.family_id],
       });
     },
   });
 }
 
-export function useDeleteTransaction() {
+export function useDeleteTransaction(familyId?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => transactionsService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.TRANSACTIONS],
-      });
+      if (familyId) {
+        queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.TRANSACTIONS, familyId],
+        });
+      } else {
+        queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.TRANSACTIONS],
+        });
+      }
     },
   });
 }
