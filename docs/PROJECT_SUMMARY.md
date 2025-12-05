@@ -211,12 +211,12 @@ budget-manager/
 - [x] Dashboard with summary cards (Real data)
 - [x] Internationalization (i18n) - English & Vietnamese
 - [x] Dynamic currency formatting ($ / đ)
+- [x] Responsive mobile design
 
 ### 🚧 In Progress / Planned
 - [ ] Income vs Expense charts
 - [ ] Transaction filtering and search
 - [ ] Dark/Light theme toggle
-- [ ] Responsive mobile design
 - [ ] Data export functionality
 
 ## 🎨 Design Philosophy

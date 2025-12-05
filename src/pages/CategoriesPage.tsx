@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Plus, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { Trash2, Plus, ArrowUpCircle, ArrowDownCircle, X } from "lucide-react";
 import type { TransactionType } from "@/types";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { createLocalizedString, getCategoryName } from "@/lib/i18n-utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -20,6 +21,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { IconPicker, Icon, type IconName } from "@/components/ui/icon-picker";
 
 export default function CategoriesPage() {
   const { t, i18n } = useTranslation();
@@ -31,8 +33,12 @@ export default function CategoriesPage() {
   const createCategory = useCreateCategory();
   const deleteCategory = useDeleteCategory(activeFamilyId ?? undefined);
 
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [nameEn, setNameEn] = useState("");
   const [nameVi, setNameVi] = useState("");
+  const [selectedIcon, setSelectedIcon] = useState<IconName | undefined>(
+    undefined,
+  );
   const [newCategoryType, setNewCategoryType] =
     useState<TransactionType>("expense");
   const isFormDisabled = !activeFamilyId;
@@ -52,10 +58,12 @@ export default function CategoriesPage() {
         type: newCategoryType,
         family_id: activeFamilyId,
         created_by: user.$id,
-        icon: "default", // Placeholder for now
+        icon: selectedIcon || "circle",
       });
       setNameEn("");
       setNameVi("");
+      setSelectedIcon(undefined);
+      setIsFormOpen(false);
     } catch (error) {
       console.error("Failed to create category:", error);
     }
@@ -93,95 +101,129 @@ export default function CategoriesPage() {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">{t("categories.title")}</h1>
+        {!isFormOpen && (
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> {t("categories.addTitle")}
+          </Button>
+        )}
       </div>
 
-      <div className="grid gap-8 md:grid-cols-[350px_1fr]">
+      <div
+        className={cn(
+          "grid gap-8",
+          isFormOpen ? "md:grid-cols-[350px_1fr]" : "grid-cols-1",
+        )}
+      >
         {/* Create Category Form */}
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>{t("categories.addTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="nameEn">{t("categories.nameLabel")} (EN)</Label>
-                <Input
-                  id="nameEn"
-                  placeholder="e.g. Groceries"
-                  value={nameEn}
-                  onChange={(e) => setNameEn(e.target.value)}
-                  disabled={isFormDisabled}
-                  required
-                />
-              </div>
+        {isFormOpen && (
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle>{t("categories.addTitle")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nameEn">
+                    {t("categories.nameLabel")} (EN)
+                  </Label>
+                  <Input
+                    id="nameEn"
+                    placeholder="e.g. Groceries"
+                    value={nameEn}
+                    onChange={(e) => setNameEn(e.target.value)}
+                    disabled={isFormDisabled}
+                    required
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="nameVi">{t("categories.nameLabel")} (VI)</Label>
-                <Input
-                  id="nameVi"
-                  placeholder="e.g. Ăn uống"
-                  value={nameVi}
-                  onChange={(e) => setNameVi(e.target.value)}
-                  disabled={isFormDisabled}
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nameVi">
+                    {t("categories.nameLabel")} (VI)
+                  </Label>
+                  <Input
+                    id="nameVi"
+                    placeholder="e.g. Ăn uống"
+                    value={nameVi}
+                    onChange={(e) => setNameVi(e.target.value)}
+                    disabled={isFormDisabled}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label>{t("categories.typeLabel")}</Label>
-                <RadioGroup
-                  value={newCategoryType}
-                  onValueChange={(value) =>
-                    setNewCategoryType(value as TransactionType)
-                  }
-                  className="flex gap-4"
+                <div className="space-y-2">
+                  <Label>{t("categories.iconLabel", "Icon")}</Label>
+                  <div className="flex">
+                    <IconPicker
+                      value={selectedIcon}
+                      onValueChange={setSelectedIcon}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>{t("categories.typeLabel")}</Label>
+                  <RadioGroup
+                    value={newCategoryType}
+                    onValueChange={(value) =>
+                      setNewCategoryType(value as TransactionType)
+                    }
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value="income"
+                        id="income"
+                        disabled={isFormDisabled}
+                      />
+                      <Label htmlFor="income" className="cursor-pointer">
+                        {t("categories.income")}
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value="expense"
+                        id="expense"
+                        disabled={isFormDisabled}
+                      />
+                      <Label htmlFor="expense" className="cursor-pointer">
+                        {t("categories.expense")}
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={createCategory.isPending || isFormDisabled}
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="income"
-                      id="income"
-                      disabled={isFormDisabled}
-                    />
-                    <Label htmlFor="income" className="cursor-pointer">
-                      {t("categories.income")}
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="expense"
-                      id="expense"
-                      disabled={isFormDisabled}
-                    />
-                    <Label htmlFor="expense" className="cursor-pointer">
-                      {t("categories.expense")}
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={createCategory.isPending || isFormDisabled}
-              >
-                {createCategory.isPending ? (
-                  t("categories.submitting")
-                ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" /> {t("categories.submit")}
-                  </>
-                )}
-              </Button>
-              {isFormDisabled && (
-                <p className="text-xs text-muted-foreground text-center">
-                  {t(
-                    "categories.familyRequiredHint",
-                    "You must select a family before adding categories.",
+                  {createCategory.isPending ? (
+                    t("categories.submitting")
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" /> {t("categories.submit")}
+                    </>
                   )}
-                </p>
-              )}
-            </form>
-          </CardContent>
-        </Card>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={() => setIsFormOpen(false)}
+                >
+                  <X className="mr-2 h-4 w-4" /> Cancel
+                </Button>
+                {isFormDisabled && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    {t(
+                      "categories.familyRequiredHint",
+                      "You must select a family before adding categories.",
+                    )}
+                  </p>
+                )}
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Categories List */}
         <div className="space-y-6">
@@ -199,12 +241,22 @@ export default function CategoriesPage() {
                 incomeCategories.map((category) => (
                   <Card key={category.$id} className="overflow-hidden">
                     <CardContent className="p-4 flex justify-between items-center">
-                      <span className="font-medium">
-                        {getCategoryName(
-                          category,
-                          i18n.resolvedLanguage || "en",
+                      <div className="flex items-center gap-3">
+                        {category.icon && (
+                          <div className="p-2 bg-muted rounded-md">
+                            <Icon
+                              name={category.icon as IconName}
+                              className="h-4 w-4"
+                            />
+                          </div>
                         )}
-                      </span>
+                        <span className="font-medium">
+                          {getCategoryName(
+                            category,
+                            i18n.resolvedLanguage || "en",
+                          )}
+                        </span>
+                      </div>
                       {isOwnerOfActiveFamily && (
                         <Popover>
                           <PopoverTrigger asChild>
@@ -255,12 +307,22 @@ export default function CategoriesPage() {
                 expenseCategories.map((category) => (
                   <Card key={category.$id} className="overflow-hidden">
                     <CardContent className="p-4 flex justify-between items-center">
-                      <span className="font-medium">
-                        {getCategoryName(
-                          category,
-                          i18n.resolvedLanguage || "en",
+                      <div className="flex items-center gap-3">
+                        {category.icon && (
+                          <div className="p-2 bg-muted rounded-md">
+                            <Icon
+                              name={category.icon as IconName}
+                              className="h-4 w-4"
+                            />
+                          </div>
                         )}
-                      </span>
+                        <span className="font-medium">
+                          {getCategoryName(
+                            category,
+                            i18n.resolvedLanguage || "en",
+                          )}
+                        </span>
+                      </div>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button

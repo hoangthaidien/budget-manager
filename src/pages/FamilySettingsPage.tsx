@@ -83,7 +83,6 @@ export default function FamilySettingsPage() {
   };
 
   const isMemberListEmpty = !isLoadingMembers && members.length === 0;
-  console.log("render Zz", { members });
   return (
     <div className="container mx-auto px-4 py-10 space-y-8">
       <header className="space-y-2">

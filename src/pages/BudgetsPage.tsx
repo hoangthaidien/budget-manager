@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Plus, AlertCircle } from "lucide-react";
+import { Icon, type IconName } from "@/components/ui/icon-picker";
+import { Trash2, Plus, AlertCircle, X } from "lucide-react";
 import type { BudgetPeriod, Category, Budget } from "@/types";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -38,6 +39,7 @@ export default function BudgetsPage() {
   const createBudget = useCreateBudget();
   const deleteBudget = useDeleteBudget(activeFamilyId ?? undefined);
 
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [period, setPeriod] = useState<BudgetPeriod>("monthly");
@@ -60,6 +62,7 @@ export default function BudgetsPage() {
       });
       setAmount("");
       setCategoryId("");
+      setIsFormOpen(false);
     } catch (error) {
       console.error("Failed to create budget:", error);
     }
@@ -134,98 +137,124 @@ export default function BudgetsPage() {
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">{t("budgets.title")}</h1>
+        {!isFormOpen && (
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> {t("budgets.setBudgetTitle")}
+          </Button>
+        )}
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[350px_1fr]">
+      <div
+        className={cn(
+          "grid gap-8",
+          isFormOpen ? "lg:grid-cols-[350px_1fr]" : "grid-cols-1",
+        )}
+      >
         {/* Create Budget Form */}
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>{t("budgets.setBudgetTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="category">
-                  {t("transactions.categoryLabel")}
-                </Label>
-                <select
-                  id="category"
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  disabled={isFormDisabled}
-                  required
-                >
-                  <option value="" disabled>
-                    {t("transactions.selectCategory")}
-                  </option>
-                  {availableCategories.map((cat) => (
-                    <option key={cat.$id} value={cat.$id}>
-                      {getLocalizedCategoryName(
-                        cat,
-                        i18n.resolvedLanguage || "en",
-                      )}{" "}
-                      ({t(`categories.${cat.type}`)})
+        {isFormOpen && (
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle>{t("budgets.setBudgetTitle")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">
+                    {t("transactions.categoryLabel")}
+                  </Label>
+                  <select
+                    id="category"
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    disabled={isFormDisabled}
+                    required
+                  >
+                    <option value="" disabled>
+                      {t("transactions.selectCategory")}
                     </option>
-                  ))}
-                </select>
-              </div>
+                    {availableCategories.map((cat) => (
+                      <option key={cat.$id} value={cat.$id}>
+                        {getLocalizedCategoryName(
+                          cat,
+                          i18n.resolvedLanguage || "en",
+                        )}{" "}
+                        ({t(`categories.${cat.type}`)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="amount">{t("budgets.limitAmountLabel")}</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  disabled={isFormDisabled}
-                  required
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="amount">
+                    {t("budgets.limitAmountLabel")}
+                  </Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    disabled={isFormDisabled}
+                    required
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="period">{t("budgets.periodLabel")}</Label>
-                <select
-                  id="period"
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value as BudgetPeriod)}
-                  disabled={isFormDisabled}
+                <div className="space-y-2">
+                  <Label htmlFor="period">{t("budgets.periodLabel")}</Label>
+                  <select
+                    id="period"
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={period}
+                    onChange={(e) => setPeriod(e.target.value as BudgetPeriod)}
+                    disabled={isFormDisabled}
+                  >
+                    <option value="monthly">
+                      {t("budgets.periods.monthly")}
+                    </option>
+                    <option value="weekly">
+                      {t("budgets.periods.weekly")}
+                    </option>
+                    <option value="yearly">
+                      {t("budgets.periods.yearly")}
+                    </option>
+                  </select>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={createBudget.isPending || isFormDisabled}
                 >
-                  <option value="monthly">
-                    {t("budgets.periods.monthly")}
-                  </option>
-                  <option value="weekly">{t("budgets.periods.weekly")}</option>
-                  <option value="yearly">{t("budgets.periods.yearly")}</option>
-                </select>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={createBudget.isPending || isFormDisabled}
-              >
-                {createBudget.isPending ? (
-                  t("budgets.submitting")
-                ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" /> {t("budgets.submit")}
-                  </>
-                )}
-              </Button>
-            </form>
-            {isFormDisabled && (
-              <p className="text-xs text-center text-muted-foreground mt-2">
-                {t(
-                  "budgets.familyRequiredHint",
-                  "You must select a family before creating budgets.",
-                )}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+                  {createBudget.isPending ? (
+                    t("budgets.submitting")
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" /> {t("budgets.submit")}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={() => setIsFormOpen(false)}
+                >
+                  <X className="mr-2 h-4 w-4" /> Cancel
+                </Button>
+              </form>
+              {isFormDisabled && (
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  {t(
+                    "budgets.familyRequiredHint",
+                    "You must select a family before creating budgets.",
+                  )}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Budgets List */}
         <div className="space-y-6">
@@ -240,12 +269,22 @@ export default function BudgetsPage() {
               const { spent, percentage } = calculateProgress(budget);
               const isOverBudget = spent > budget.amount;
 
+              const catId =
+                typeof budget.category_id === "object"
+                  ? budget.category_id.$id
+                  : budget.category_id;
+              const category = categories?.find((c) => c.$id === catId);
+              const iconName = category?.icon as IconName | undefined;
+
               return (
                 <Card key={budget.$id}>
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-lg">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          {iconName && (
+                            <Icon name={iconName} className="h-5 w-5" />
+                          )}
                           {getCategoryName(budget.category_id)}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground capitalize">

@@ -3,20 +3,19 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
-import { Calendar } from "@/components/ui/calendar";
-import { useState } from "react";
-import { vi, enUS } from "date-fns/locale";
+// import { useState } from "react";
+// import { vi, enUS } from "date-fns/locale";
 
 export default function DashboardPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const formatCurrency = useCurrencyFormatter();
   const { activeFamilyId } = useFamily();
   const { data: transactions, isLoading } = useTransactions(
     activeFamilyId ?? undefined,
   );
 
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const currentLocale = i18n.resolvedLanguage === "vi" ? vi : enUS;
+  // const [date, setDate] = useState<Date | undefined>(new Date());
+  // const currentLocale = i18n.resolvedLanguage === "vi" ? vi : enUS;
 
   const calculateTotals = () => {
     if (!transactions) return { balance: 0, income: 0, expense: 0 };
@@ -122,15 +121,6 @@ export default function DashboardPage() {
           </p>
         </CardContent>
       </Card>
-
-      <Calendar
-        mode="single"
-        selected={date}
-        onSelect={setDate}
-        className="rounded-md border shadow-sm"
-        captionLayout="dropdown"
-        locale={currentLocale}
-      />
     </div>
   );
 }

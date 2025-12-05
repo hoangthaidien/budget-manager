@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Icon, type IconName } from "@/components/ui/icon-picker";
 import {
   Trash2,
   Plus,
@@ -64,6 +65,7 @@ export default function TransactionsPage() {
   const deleteTransaction = useDeleteTransaction(activeFamilyId ?? undefined);
   const createTag = useCreateTag();
 
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<TransactionType>("expense");
@@ -118,6 +120,7 @@ export default function TransactionsPage() {
         setDate(new Date());
         setCategoryId("");
       }
+      setIsFormOpen(false);
     } catch (error) {
       console.error("Failed to save transaction:", error);
     }
@@ -138,6 +141,7 @@ export default function TransactionsPage() {
   };
 
   const handleEdit = (transaction: Transaction) => {
+    setIsFormOpen(true);
     setEditingId(transaction.$id);
     setAmount(transaction.amount.toString());
     setType(transaction.type);
@@ -156,10 +160,11 @@ export default function TransactionsPage() {
   const handleCancel = () => {
     setEditingId(null);
     setAmount("");
+    setCategoryId("");
     setDescription("");
     setDate(new Date());
-    setCategoryId("");
     setSelectedTags([]);
+    setIsFormOpen(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -202,191 +207,204 @@ export default function TransactionsPage() {
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">{t("transactions.title")}</h1>
+        {!isFormOpen && (
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> {t("transactions.addTitle")}
+          </Button>
+        )}
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[350px_1fr]">
+      <div
+        className={cn(
+          "grid gap-8",
+          isFormOpen ? "lg:grid-cols-[350px_1fr]" : "grid-cols-1",
+        )}
+      >
         {/* Add Transaction Form */}
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>
-              {editingId ? "Edit Transaction" : t("transactions.addTitle")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t("categories.typeLabel")}</Label>
-                <RadioGroup
-                  value={type}
-                  onValueChange={(value) => {
-                    setType(value as TransactionType);
-                    setCategoryId("");
-                  }}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="income" id="income" />
-                    <Label htmlFor="income" className="cursor-pointer">
-                      {t("categories.income")}
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="expense" id="expense" />
-                    <Label htmlFor="expense" className="cursor-pointer">
-                      {t("categories.expense")}
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="amount">{t("transactions.amountLabel")}</Label>
-                <div className="relative">
-                  <DollarSign className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <NumericFormat
-                    customInput={Input}
-                    id="amount"
-                    thousandSeparator=","
-                    decimalScale={2}
-                    placeholder="0.00"
-                    className="pl-8"
-                    value={amount}
-                    onValueChange={(values) => {
-                      setAmount(values.value);
+        {isFormOpen && (
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle>
+                {editingId ? "Edit Transaction" : t("transactions.addTitle")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>{t("categories.typeLabel")}</Label>
+                  <RadioGroup
+                    value={type}
+                    onValueChange={(value) => {
+                      setType(value as TransactionType);
+                      setCategoryId("");
                     }}
-                    disabled={isFormDisabled}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="income" id="income" />
+                      <Label htmlFor="income" className="cursor-pointer">
+                        {t("categories.income")}
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="expense" id="expense" />
+                      <Label htmlFor="expense" className="cursor-pointer">
+                        {t("categories.expense")}
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="amount">
+                    {t("transactions.amountLabel")}
+                  </Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <NumericFormat
+                      customInput={Input}
+                      id="amount"
+                      thousandSeparator=","
+                      decimalScale={2}
+                      placeholder="0.00"
+                      className="pl-8"
+                      value={amount}
+                      onValueChange={(values) => {
+                        setAmount(values.value);
+                      }}
+                      disabled={isFormDisabled}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="category">
+                    {t("transactions.categoryLabel")}
+                  </Label>
+                  <Select
+                    value={categoryId}
+                    onValueChange={setCategoryId}
                     required
+                  >
+                    <SelectTrigger id="category">
+                      <SelectValue
+                        placeholder={t("transactions.selectCategory")}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCategories.map((cat) => (
+                        <SelectItem key={cat.$id} value={cat.$id}>
+                          {getLocalizedCategoryName(
+                            cat,
+                            i18n.resolvedLanguage || "en",
+                          )}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {availableCategories.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {t("transactions.noCategories", {
+                        type:
+                          type === "income"
+                            ? t("categories.income")
+                            : t("categories.expense"),
+                      })}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Tags</Label>
+                  <MultiSelect
+                    options={
+                      tags?.map((tag) => ({
+                        label: tag.name,
+                        value: tag.$id,
+                      })) || []
+                    }
+                    selected={selectedTags}
+                    onChange={setSelectedTags}
+                    onCreate={handleCreateTag}
+                    placeholder="Select or create tags..."
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="category">
-                  {t("transactions.categoryLabel")}
-                </Label>
-                <Select
-                  value={categoryId}
-                  onValueChange={setCategoryId}
-                  required
-                >
-                  <SelectTrigger id="category">
-                    <SelectValue
-                      placeholder={t("transactions.selectCategory")}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableCategories.map((cat) => (
-                      <SelectItem key={cat.$id} value={cat.$id}>
-                        {getLocalizedCategoryName(
-                          cat,
-                          i18n.resolvedLanguage || "en",
+                <div className="space-y-2 flex flex-col">
+                  <Label htmlFor="date">{t("transactions.dateLabel")}</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !date && "text-muted-foreground",
                         )}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {availableCategories.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("transactions.noCategories", {
-                      type:
-                        type === "income"
-                          ? t("categories.income")
-                          : t("categories.expense"),
-                    })}
-                  </p>
-                )}
-              </div>
+                      >
+                        {date ? (
+                          format(date, "PPP", { locale: currentLocale })
+                        ) : (
+                          <span>{t("transactions.dateLabel")}</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                        locale={currentLocale}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
-              <div className="space-y-2">
-                <Label>Tags</Label>
-                <MultiSelect
-                  options={
-                    tags?.map((tag) => ({
-                      label: tag.name,
-                      value: tag.$id,
-                    })) || []
+                <div className="space-y-2">
+                  <Label htmlFor="description">
+                    {t("transactions.descriptionLabel")}
+                  </Label>
+                  <Input
+                    id="description"
+                    placeholder="e.g. Lunch with friends"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className={cn(
+                    "w-full",
+                    type === "income"
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-red-600 hover:bg-red-700",
+                  )}
+                  disabled={
+                    createTransaction.isPending || updateTransaction.isPending
                   }
-                  selected={selectedTags}
-                  onChange={setSelectedTags}
-                  onCreate={handleCreateTag}
-                  placeholder="Select or create tags..."
-                />
-              </div>
-
-              <div className="space-y-2 flex flex-col">
-                <Label htmlFor="date">{t("transactions.dateLabel")}</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !date && "text-muted-foreground",
-                      )}
-                    >
-                      {date ? (
-                        format(date, "PPP", { locale: currentLocale })
+                >
+                  {createTransaction.isPending ||
+                  updateTransaction.isPending ? (
+                    t("transactions.submitting")
+                  ) : (
+                    <>
+                      {editingId ? (
+                        <Pencil className="mr-2 h-4 w-4" />
                       ) : (
-                        <span>{t("transactions.dateLabel")}</span>
+                        <Plus className="mr-2 h-4 w-4" />
                       )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                      locale={currentLocale}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">
-                  {t("transactions.descriptionLabel")}
-                </Label>
-                <Input
-                  id="description"
-                  placeholder="e.g. Lunch with friends"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className={cn(
-                  "w-full",
-                  type === "income"
-                    ? "bg-green-600 hover:bg-green-700"
-                    : "bg-red-600 hover:bg-red-700",
-                )}
-                disabled={
-                  createTransaction.isPending || updateTransaction.isPending
-                }
-              >
-                {createTransaction.isPending || updateTransaction.isPending ? (
-                  t("transactions.submitting")
-                ) : (
-                  <>
-                    {editingId ? (
-                      <Pencil className="mr-2 h-4 w-4" />
-                    ) : (
-                      <Plus className="mr-2 h-4 w-4" />
-                    )}
-                    {editingId
-                      ? "Update Transaction"
-                      : t("transactions.submit")}
-                  </>
-                )}
-              </Button>
-              {editingId && (
+                      {editingId
+                        ? "Update Transaction"
+                        : t("transactions.submit")}
+                    </>
+                  )}
+                </Button>
                 <Button
                   type="button"
                   variant="outline"
@@ -395,10 +413,10 @@ export default function TransactionsPage() {
                 >
                   <X className="mr-2 h-4 w-4" /> Cancel
                 </Button>
-              )}
-            </form>
-          </CardContent>
-        </Card>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Transactions List */}
         <div className="space-y-4">
@@ -413,121 +431,137 @@ export default function TransactionsPage() {
                     {t("transactions.empty")}
                   </p>
                 ) : (
-                  transactions?.map((transaction) => (
-                    <div
-                      key={transaction.$id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={cn(
-                            "p-2 rounded-full",
-                            transaction.type === "income"
-                              ? "bg-green-100 text-green-600 dark:bg-green-900/20"
-                              : "bg-red-100 text-red-600 dark:bg-red-900/20",
-                          )}
-                        >
-                          {transaction.type === "income" ? (
-                            <DollarSign className="h-5 w-5" />
-                          ) : (
-                            <TagIcon className="h-5 w-5" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            {getCategoryName(transaction.category_id)}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(transaction.date).toLocaleDateString(
-                              i18n.resolvedLanguage,
+                  transactions?.map((transaction) => {
+                    const categoryId =
+                      typeof transaction.category_id === "object"
+                        ? transaction.category_id.$id
+                        : transaction.category_id;
+                    const category = categories?.find(
+                      (c) => c.$id === categoryId,
+                    );
+                    const iconName = category?.icon as IconName | undefined;
+
+                    return (
+                      <div
+                        key={transaction.$id}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors gap-4"
+                      >
+                        <div className="flex items-center gap-4 w-full sm:w-auto">
+                          <div
+                            className={cn(
+                              "p-2 rounded-full",
+                              transaction.type === "income"
+                                ? "bg-green-100 text-green-600 dark:bg-green-900/20"
+                                : "bg-red-100 text-red-600 dark:bg-red-900/20",
                             )}
-                            {transaction.description &&
-                              ` • ${transaction.description}`}
-                          </p>
-                          {transaction.tags && transaction.tags.length > 0 && (
-                            <div className="flex gap-1 mt-1 flex-wrap">
-                              {transaction.tags.map((tag) => {
-                                const tagName =
-                                  typeof tag === "object"
-                                    ? tag.name
-                                    : tags?.find((t) => t.$id === tag)?.name ||
-                                      "Unknown";
-                                return (
-                                  <Badge
-                                    key={
-                                      typeof tag === "object" ? tag.$id : tag
-                                    }
-                                    variant="secondary"
-                                    className="text-[10px] px-1 py-0 h-5"
-                                  >
-                                    {tagName}
-                                  </Badge>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span
-                          className={cn(
-                            "font-bold",
-                            transaction.type === "income"
-                              ? "text-green-600"
-                              : "text-red-600",
-                          )}
-                        >
-                          {transaction.type === "income" ? "+" : "-"}
-                          {formatCurrency(transaction.amount)}
-                        </span>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-primary"
-                            onClick={() => handleEdit(transaction)}
                           >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          {isOwnerOfActiveFamily && (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                  disabled={deleteTransaction.isPending}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                className="w-auto p-4"
-                                align="end"
-                              >
-                                <div className="flex flex-col gap-4">
-                                  <p className="text-sm font-medium">
-                                    {t("transactions.deleteConfirm")}
-                                  </p>
+                            {iconName ? (
+                              <Icon name={iconName} className="h-5 w-5" />
+                            ) : transaction.type === "income" ? (
+                              <DollarSign className="h-5 w-5" />
+                            ) : (
+                              <TagIcon className="h-5 w-5" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium">
+                              {getCategoryName(transaction.category_id)}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(transaction.date).toLocaleDateString(
+                                i18n.resolvedLanguage,
+                              )}
+                              {transaction.description &&
+                                ` • ${transaction.description}`}
+                            </p>
+                            {transaction.tags &&
+                              transaction.tags.length > 0 && (
+                                <div className="flex gap-1 mt-1 flex-wrap">
+                                  {transaction.tags.map((tag) => {
+                                    const tagName =
+                                      typeof tag === "object"
+                                        ? tag.name
+                                        : tags?.find((t) => t.$id === tag)
+                                            ?.name || "Unknown";
+                                    return (
+                                      <Badge
+                                        key={
+                                          typeof tag === "object"
+                                            ? tag.$id
+                                            : tag
+                                        }
+                                        variant="secondary"
+                                        className="text-[10px] px-1 py-0 h-5"
+                                      >
+                                        {tagName}
+                                      </Badge>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                          <span
+                            className={cn(
+                              "font-bold",
+                              transaction.type === "income"
+                                ? "text-green-600"
+                                : "text-red-600",
+                            )}
+                          >
+                            {transaction.type === "income" ? "+" : "-"}
+                            {formatCurrency(transaction.amount)}
+                          </span>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary"
+                              onClick={() => handleEdit(transaction)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            {isOwnerOfActiveFamily && (
+                              <Popover>
+                                <PopoverTrigger asChild>
                                   <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleDelete(transaction.$id)
-                                    }
-                                    className="w-full"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
                                     disabled={deleteTransaction.isPending}
                                   >
-                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          )}
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-auto p-4"
+                                  align="end"
+                                >
+                                  <div className="flex flex-col gap-4">
+                                    <p className="text-sm font-medium">
+                                      {t("transactions.deleteConfirm")}
+                                    </p>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() =>
+                                        handleDelete(transaction.$id)
+                                      }
+                                      className="w-full"
+                                      disabled={deleteTransaction.isPending}
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    </Button>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </CardContent>

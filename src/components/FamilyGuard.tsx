@@ -19,7 +19,6 @@ export function FamilyGuard({ children }: PropsWithChildren) {
       </div>
     );
   }
-  console.log("families", families);
   if (families.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-8 text-center">
