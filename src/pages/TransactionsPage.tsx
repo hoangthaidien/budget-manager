@@ -431,137 +431,208 @@ export default function TransactionsPage() {
                     {t("transactions.empty")}
                   </p>
                 ) : (
-                  transactions?.map((transaction) => {
-                    const categoryId =
-                      typeof transaction.category_id === "object"
-                        ? transaction.category_id.$id
-                        : transaction.category_id;
-                    const category = categories?.find(
-                      (c) => c.$id === categoryId,
-                    );
-                    const iconName = category?.icon as IconName | undefined;
+                  Object.entries(
+                    transactions?.reduce(
+                      (groups, transaction) => {
+                        const date = new Date(transaction.date)
+                          .toISOString()
+                          .split("T")[0];
+                        if (!groups[date]) {
+                          groups[date] = [];
+                        }
+                        groups[date].push(transaction);
+                        return groups;
+                      },
+                      {} as Record<string, typeof transactions>,
+                    ) || {},
+                  )
+                    .sort(
+                      (a, b) =>
+                        new Date(b[0]).getTime() - new Date(a[0]).getTime(),
+                    )
+                    .map(([date, dayTransactions]) => {
+                      const dailyTotal = dayTransactions.reduce(
+                        (sum, t) =>
+                          sum + (t.type === "income" ? t.amount : -t.amount),
+                        0,
+                      );
 
-                    return (
-                      <div
-                        key={transaction.$id}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors gap-4"
-                      >
-                        <div className="flex items-center gap-4 w-full sm:w-auto">
-                          <div
-                            className={cn(
-                              "p-2 rounded-full",
-                              transaction.type === "income"
-                                ? "bg-green-100 text-green-600 dark:bg-green-900/20"
-                                : "bg-red-100 text-red-600 dark:bg-red-900/20",
-                            )}
-                          >
-                            {iconName ? (
-                              <Icon name={iconName} className="h-5 w-5" />
-                            ) : transaction.type === "income" ? (
-                              <DollarSign className="h-5 w-5" />
-                            ) : (
-                              <TagIcon className="h-5 w-5" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium">
-                              {getCategoryName(transaction.category_id)}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(transaction.date).toLocaleDateString(
+                      return (
+                        <div key={date} className="space-y-2">
+                          <h3 className="text-sm font-medium text-muted-foreground bg-muted/30 p-2 rounded-md sticky top-0 backdrop-blur-sm z-10 flex justify-between items-center">
+                            <span>
+                              {new Date(date).toLocaleDateString(
                                 i18n.resolvedLanguage,
+                                {
+                                  weekday: "short",
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
                               )}
-                              {transaction.description &&
-                                ` • ${transaction.description}`}
-                            </p>
-                            {transaction.tags &&
-                              transaction.tags.length > 0 && (
-                                <div className="flex gap-1 mt-1 flex-wrap">
-                                  {transaction.tags.map((tag) => {
-                                    const tagName =
-                                      typeof tag === "object"
-                                        ? tag.name
-                                        : tags?.find((t) => t.$id === tag)
-                                            ?.name || "Unknown";
-                                    return (
-                                      <Badge
-                                        key={
-                                          typeof tag === "object"
-                                            ? tag.$id
-                                            : tag
-                                        }
-                                        variant="secondary"
-                                        className="text-[10px] px-1 py-0 h-5"
-                                      >
-                                        {tagName}
-                                      </Badge>
-                                    );
-                                  })}
-                                </div>
+                            </span>
+                            <span
+                              className={cn(
+                                dailyTotal >= 0
+                                  ? "text-green-600"
+                                  : "text-red-600",
                               )}
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
-                          <span
-                            className={cn(
-                              "font-bold",
-                              transaction.type === "income"
-                                ? "text-green-600"
-                                : "text-red-600",
-                            )}
-                          >
-                            {transaction.type === "income" ? "+" : "-"}
-                            {formatCurrency(transaction.amount)}
-                          </span>
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-primary"
-                              onClick={() => handleEdit(transaction)}
                             >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            {isOwnerOfActiveFamily && (
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                    disabled={deleteTransaction.isPending}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent
-                                  className="w-auto p-4"
-                                  align="end"
+                              {dailyTotal > 0 ? "+" : ""}
+                              {formatCurrency(dailyTotal)}
+                            </span>
+                          </h3>
+                          <div className="space-y-2">
+                            {dayTransactions.map((transaction) => {
+                              const categoryId =
+                                typeof transaction.category_id === "object"
+                                  ? transaction.category_id.$id
+                                  : transaction.category_id;
+                              const category = categories?.find(
+                                (c) => c.$id === categoryId,
+                              );
+                              const iconName = category?.icon as
+                                | IconName
+                                | undefined;
+
+                              return (
+                                <div
+                                  key={transaction.$id}
+                                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors gap-4"
                                 >
-                                  <div className="flex flex-col gap-4">
-                                    <p className="text-sm font-medium">
-                                      {t("transactions.deleteConfirm")}
-                                    </p>
-                                    <Button
-                                      variant="destructive"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleDelete(transaction.$id)
-                                      }
-                                      className="w-full"
-                                      disabled={deleteTransaction.isPending}
+                                  <div className="flex items-center gap-4 w-full sm:w-auto">
+                                    <div
+                                      className={cn(
+                                        "p-2 rounded-full",
+                                        transaction.type === "income"
+                                          ? "bg-green-100 text-green-600 dark:bg-green-900/20"
+                                          : "bg-red-100 text-red-600 dark:bg-red-900/20",
+                                      )}
                                     >
-                                      <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                    </Button>
+                                      {iconName ? (
+                                        <Icon
+                                          name={iconName}
+                                          className="h-5 w-5"
+                                        />
+                                      ) : transaction.type === "income" ? (
+                                        <DollarSign className="h-5 w-5" />
+                                      ) : (
+                                        <TagIcon className="h-5 w-5" />
+                                      )}
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">
+                                        {getCategoryName(
+                                          transaction.category_id,
+                                        )}
+                                      </p>
+                                      {transaction.description && (
+                                        <p className="text-sm text-muted-foreground">
+                                          {transaction.description}
+                                        </p>
+                                      )}
+                                      {transaction.tags &&
+                                        transaction.tags.length > 0 && (
+                                          <div className="flex gap-1 mt-1 flex-wrap">
+                                            {transaction.tags.map((tag) => {
+                                              const tagName =
+                                                typeof tag === "object"
+                                                  ? tag.name
+                                                  : tags?.find(
+                                                      (t) => t.$id === tag,
+                                                    )?.name || "Unknown";
+                                              return (
+                                                <Badge
+                                                  key={
+                                                    typeof tag === "object"
+                                                      ? tag.$id
+                                                      : tag
+                                                  }
+                                                  variant="secondary"
+                                                  className="text-[10px] px-1 py-0 h-5"
+                                                >
+                                                  {tagName}
+                                                </Badge>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+                                    </div>
                                   </div>
-                                </PopoverContent>
-                              </Popover>
-                            )}
+                                  <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                                    <span
+                                      className={cn(
+                                        "font-bold",
+                                        transaction.type === "income"
+                                          ? "text-green-600"
+                                          : "text-red-600",
+                                      )}
+                                    >
+                                      {transaction.type === "income"
+                                        ? "+"
+                                        : "-"}
+                                      {formatCurrency(transaction.amount)}
+                                    </span>
+                                    <div className="flex gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                        onClick={() => handleEdit(transaction)}
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      {isOwnerOfActiveFamily && (
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                              disabled={
+                                                deleteTransaction.isPending
+                                              }
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </PopoverTrigger>
+                                          <PopoverContent
+                                            className="w-auto p-4"
+                                            align="end"
+                                          >
+                                            <div className="flex flex-col gap-4">
+                                              <p className="text-sm font-medium">
+                                                {t(
+                                                  "transactions.deleteConfirm",
+                                                )}
+                                              </p>
+                                              <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() =>
+                                                  handleDelete(transaction.$id)
+                                                }
+                                                className="w-full"
+                                                disabled={
+                                                  deleteTransaction.isPending
+                                                }
+                                              >
+                                                <Trash2 className="mr-2 h-4 w-4" />{" "}
+                                                Delete
+                                              </Button>
+                                            </div>
+                                          </PopoverContent>
+                                        </Popover>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })
                 )}
               </div>
             </CardContent>

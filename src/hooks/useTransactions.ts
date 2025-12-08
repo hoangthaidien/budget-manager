@@ -37,8 +37,12 @@ export function useUpdateTransaction() {
       payload: Partial<TransactionPayload>;
     }) => transactionsService.update(id, payload),
     onSuccess: (data) => {
+      const familyId =
+        typeof data.family_id === "object"
+          ? data.family_id.$id
+          : data.family_id;
       queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.TRANSACTIONS, data.family_id],
+        queryKey: [QUERY_KEYS.TRANSACTIONS, familyId],
       });
     },
   });
