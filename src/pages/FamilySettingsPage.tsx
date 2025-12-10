@@ -14,7 +14,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Crown, Trash2, UserPlus } from "lucide-react";
+import { Crown, Trash2, UserPlus, Plus } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 export default function FamilySettingsPage() {
   const { t } = useTranslation();
@@ -39,6 +46,7 @@ export default function FamilySettingsPage() {
   const [familyName, setFamilyName] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [memberId, setMemberId] = useState("");
+  const [isCreateFamilyOpen, setIsCreateFamilyOpen] = useState(false);
 
   const currentOwnerId = useMemo(
     () => activeFamily?.owner_id ?? null,
@@ -60,6 +68,7 @@ export default function FamilySettingsPage() {
     });
 
     setFamilyName("");
+    setIsCreateFamilyOpen(false);
     await refreshFamilies();
   };
 
@@ -85,26 +94,38 @@ export default function FamilySettingsPage() {
   const isMemberListEmpty = !isLoadingMembers && members.length === 0;
   return (
     <div className="container mx-auto px-4 py-10 space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold">
-          {t("families.settingsTitle", "Family settings")}
-        </h1>
-        <p className="text-muted-foreground max-w-2xl">
-          {t(
-            "families.settingsDescription",
-            "Create families to share budgets, categories, and transactions. Manage which members can collaborate with you.",
-          )}
-        </p>
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">
+            {t("families.settingsTitle", "Family settings")}
+          </h1>
+          <p className="text-muted-foreground max-w-2xl">
+            {t(
+              "families.settingsDescription",
+              "Create families to share budgets, categories, and transactions. Manage which members can collaborate with you.",
+            )}
+          </p>
+        </div>
+        <Button onClick={() => setIsCreateFamilyOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          {t("families.createTitle", "Create a new family")}
+        </Button>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>
+      <Sheet open={isCreateFamilyOpen} onOpenChange={setIsCreateFamilyOpen}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>
               {t("families.createTitle", "Create a new family")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </SheetTitle>
+            <SheetDescription>
+              {t(
+                "families.createDescription",
+                "Add a new family workspace to manage finances together.",
+              )}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="px-4 py-6">
             <form onSubmit={handleCreateFamily} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="family-name">
@@ -146,9 +167,11 @@ export default function FamilySettingsPage() {
                   : t("families.createAction", "Create family")}
               </Button>
             </form>
-          </CardContent>
-        </Card>
+          </div>
+        </SheetContent>
+      </Sheet>
 
+      <div className="grid gap-6 grid-cols-1">
         <Card>
           <CardHeader className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">

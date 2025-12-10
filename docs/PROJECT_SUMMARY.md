@@ -214,8 +214,8 @@ budget-manager/
 - [x] Responsive mobile design
 
 ### 🚧 In Progress / Planned
+- [x] Transaction filtering and search
 - [ ] Income vs Expense charts
-- [ ] Transaction filtering and search
 - [ ] Dark/Light theme toggle
 - [ ] Data export functionality
 

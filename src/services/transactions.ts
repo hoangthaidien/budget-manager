@@ -1,18 +1,46 @@
 import { ID, Query } from "appwrite";
 import { tablesDB } from "@/lib/appwrite";
 import { DATABASE_ID, COLLECTIONS } from "@/lib/constants";
-import type { Transaction, TransactionPayload } from "@/types";
+import type {
+  Transaction,
+  TransactionPayload,
+  TransactionFilters,
+} from "@/types";
 
 export const transactionsService = {
-  async list(familyId: string) {
+  async list(familyId: string, filters?: TransactionFilters) {
+    const queries = [
+      Query.equal("family_id", familyId),
+      Query.orderDesc("date"),
+      Query.orderDesc("$createdAt"),
+    ];
+
+    if (filters) {
+      if (filters.type && filters.type !== "all") {
+        queries.push(Query.equal("type", filters.type));
+      }
+      if (filters.category_id && filters.category_id !== "all") {
+        queries.push(Query.equal("category_id", filters.category_id));
+      }
+      if (filters.startDate) {
+        queries.push(
+          Query.greaterThanEqual("date", filters.startDate.toISOString()),
+        );
+      }
+      if (filters.endDate) {
+        queries.push(
+          Query.lessThanEqual("date", filters.endDate.toISOString()),
+        );
+      }
+      if (filters.tags && filters.tags.length > 0) {
+        queries.push(Query.equal("tags", filters.tags));
+      }
+    }
+
     const response = await tablesDB.listRows<Transaction>({
       databaseId: DATABASE_ID,
       tableId: COLLECTIONS.TRANSACTIONS,
-      queries: [
-        Query.equal("family_id", familyId),
-        Query.orderDesc("date"),
-        Query.orderDesc("$createdAt"),
-      ],
+      queries,
     });
     return response.rows;
   },

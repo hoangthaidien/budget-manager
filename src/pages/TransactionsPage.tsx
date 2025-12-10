@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import type { DateRange } from "react-day-picker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamily } from "@/contexts/FamilyContext";
 import {
@@ -22,8 +23,10 @@ import {
   Tag as TagIcon,
   Pencil,
   X,
+  Search,
+  Filter,
 } from "lucide-react";
-import type { Transaction, TransactionType, Category } from "@/types";
+import type { Transaction, TransactionType, Category, Tag } from "@/types";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
@@ -40,6 +43,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Calendar } from "@/components/ui/calendar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { MultiSelect } from "@/components/ui/multi-select";
@@ -48,17 +59,173 @@ import { format } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
 import { NumericFormat } from "react-number-format";
 
+interface FilterControlsProps {
+  filterType: TransactionType | "all";
+  setFilterType: (value: TransactionType | "all") => void;
+  filterCategory: string;
+  setFilterCategory: (value: string) => void;
+  categories: Category[] | undefined;
+  filterTags: string[];
+  setFilterTags: (value: string[]) => void;
+  tags: Tag[] | undefined;
+  dateRange: DateRange | undefined;
+  setDateRange: (value: DateRange | undefined) => void;
+  fullWidth?: boolean;
+}
+
+function FilterControls({
+  filterType,
+  setFilterType,
+  filterCategory,
+  setFilterCategory,
+  categories,
+  filterTags,
+  setFilterTags,
+  tags,
+  dateRange,
+  setDateRange,
+  fullWidth = false,
+}: FilterControlsProps) {
+  const { t, i18n } = useTranslation();
+
+  return (
+    <>
+      <Select
+        value={filterType}
+        onValueChange={(value) =>
+          setFilterType(value as TransactionType | "all")
+        }
+      >
+        <SelectTrigger className={cn(fullWidth ? "w-full" : "w-[180px]")}>
+          <SelectValue placeholder={t("categories.typeLabel")} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">
+            {t("common.allTypes", "All Types")}
+          </SelectItem>
+          <SelectItem value="income">{t("categories.income")}</SelectItem>
+          <SelectItem value="expense">{t("categories.expense")}</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={filterCategory} onValueChange={setFilterCategory}>
+        <SelectTrigger className={cn(fullWidth ? "w-full" : "w-[200px]")}>
+          <SelectValue placeholder={t("transactions.categoryLabel")} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">
+            {t("common.allCategories", "All Categories")}
+          </SelectItem>
+          {categories?.map((cat) => (
+            <SelectItem key={cat.$id} value={cat.$id}>
+              {getLocalizedCategoryName(cat, i18n.resolvedLanguage || "en")}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <div className={cn(fullWidth ? "w-full" : "w-[200px]")}>
+        <MultiSelect
+          options={
+            tags?.map((tag) => ({
+              label: tag.name,
+              value: tag.$id,
+            })) || []
+          }
+          selected={filterTags}
+          onChange={setFilterTags}
+          placeholder={t("transactions.filterTags", "Filter by tags")}
+        />
+      </div>
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant={"outline"}
+            className={cn(
+              fullWidth ? "w-full" : "w-60",
+              "justify-start text-left font-normal",
+              !dateRange && "text-muted-foreground",
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {dateRange?.from ? (
+              dateRange.to ? (
+                <>
+                  {format(dateRange.from, "LLL dd, y")} -{" "}
+                  {format(dateRange.to, "LLL dd, y")}
+                </>
+              ) : (
+                format(dateRange.from, "LLL dd, y")
+              )
+            ) : (
+              <span>{t("common.pickDateRange", "Pick a date range")}</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="end">
+          <Calendar
+            initialFocus
+            mode="range"
+            defaultMonth={dateRange?.from}
+            selected={dateRange}
+            onSelect={setDateRange}
+            numberOfMonths={2}
+          />
+        </PopoverContent>
+      </Popover>
+    </>
+  );
+}
+
 export default function TransactionsPage() {
   const { t, i18n } = useTranslation();
   const formatCurrency = useCurrencyFormatter();
   const { user } = useAuth();
   const { activeFamilyId, isOwnerOfActiveFamily } = useFamily();
-  const { data: transactions, isLoading: isLoadingTransactions } =
-    useTransactions(activeFamilyId ?? undefined);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const [filterType, setFilterType] = useState<TransactionType | "all">("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterTags, setFilterTags] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+
+  const { data: rawTransactions, isLoading: isLoadingTransactions } =
+    useTransactions(activeFamilyId ?? undefined, {
+      type: filterType,
+      category_id: filterCategory,
+      tags: filterTags,
+      startDate: dateRange?.from,
+      endDate: dateRange?.to,
+    });
+
   const { data: categories } = useCategories(activeFamilyId ?? undefined);
   const { data: tags } = useTags(activeFamilyId ?? undefined);
 
-  const currentLocale = i18n.resolvedLanguage === "vi" ? vi : enUS;
+  const currentLocale = i18n.language === "vi" ? vi : enUS;
+
+  const transactions = rawTransactions?.filter((t) => {
+    if (!debouncedSearch) return true;
+    const searchLower = debouncedSearch.toLowerCase();
+    const category =
+      typeof t.category_id === "object"
+        ? t.category_id
+        : categories?.find((c) => c.$id === t.category_id);
+    const categoryName = category
+      ? getLocalizedCategoryName(category, i18n.resolvedLanguage || "en")
+      : "";
+
+    return (
+      t.description?.toLowerCase().includes(searchLower) ||
+      categoryName.toLowerCase().includes(searchLower)
+    );
+  });
 
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
@@ -214,210 +381,331 @@ export default function TransactionsPage() {
         )}
       </div>
 
-      <div
-        className={cn(
-          "grid gap-8",
-          isFormOpen ? "lg:grid-cols-[350px_1fr]" : "grid-cols-1",
-        )}
-      >
-        {/* Add Transaction Form */}
-        {isFormOpen && (
-          <Card className="h-fit">
-            <CardHeader>
-              <CardTitle>
-                {editingId ? "Edit Transaction" : t("transactions.addTitle")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>{t("categories.typeLabel")}</Label>
-                  <RadioGroup
-                    value={type}
-                    onValueChange={(value) => {
-                      setType(value as TransactionType);
-                      setCategoryId("");
+      {/* Filters */}
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t(
+                "transactions.searchPlaceholder",
+                "Search transactions...",
+              )}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+
+          {/* Mobile Filter Button */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="md:hidden shrink-0"
+              >
+                <Filter className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              className="w-[300px] sm:w-[400px] overflow-y-auto"
+            >
+              <SheetHeader>
+                <SheetTitle>{t("common.filters", "Filters")}</SheetTitle>
+                <SheetDescription>
+                  {t(
+                    "transactions.filterDescription",
+                    "Refine your transaction list.",
+                  )}
+                </SheetDescription>
+              </SheetHeader>
+              <div className="p-4 space-y-4 flex flex-col">
+                <FilterControls
+                  filterType={filterType}
+                  setFilterType={setFilterType}
+                  filterCategory={filterCategory}
+                  setFilterCategory={setFilterCategory}
+                  categories={categories}
+                  filterTags={filterTags}
+                  setFilterTags={setFilterTags}
+                  tags={tags}
+                  dateRange={dateRange}
+                  setDateRange={setDateRange}
+                  fullWidth
+                />
+                {(search ||
+                  filterType !== "all" ||
+                  filterCategory !== "all" ||
+                  filterTags.length > 0 ||
+                  dateRange) && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearch("");
+                      setFilterType("all");
+                      setFilterCategory("all");
+                      setFilterTags([]);
+                      setDateRange(undefined);
                     }}
-                    className="flex gap-4"
+                    className="w-full"
                   >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="income" id="income" />
-                      <Label htmlFor="income" className="cursor-pointer">
-                        {t("categories.income")}
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="expense" id="expense" />
-                      <Label htmlFor="expense" className="cursor-pointer">
-                        {t("categories.expense")}
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+                    <X className="mr-2 h-4 w-4" />{" "}
+                    {t("common.clearFilters", "Clear filters")}
+                  </Button>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
 
-                <div className="space-y-2">
-                  <Label htmlFor="amount">
-                    {t("transactions.amountLabel")}
-                  </Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <NumericFormat
-                      customInput={Input}
-                      id="amount"
-                      thousandSeparator=","
-                      decimalScale={2}
-                      placeholder="0.00"
-                      className="pl-8"
-                      value={amount}
-                      onValueChange={(values) => {
-                        setAmount(values.value);
-                      }}
-                      disabled={isFormDisabled}
-                      required
-                    />
+          {/* Desktop Filters */}
+          <div className="hidden md:flex gap-2 items-center">
+            <FilterControls
+              filterType={filterType}
+              setFilterType={setFilterType}
+              filterCategory={filterCategory}
+              setFilterCategory={setFilterCategory}
+              categories={categories}
+              filterTags={filterTags}
+              setFilterTags={setFilterTags}
+              tags={tags}
+              dateRange={dateRange}
+              setDateRange={setDateRange}
+            />
+            {(search ||
+              filterType !== "all" ||
+              filterCategory !== "all" ||
+              filterTags.length > 0 ||
+              dateRange) && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setSearch("");
+                  setFilterType("all");
+                  setFilterCategory("all");
+                  setFilterTags([]);
+                  setDateRange(undefined);
+                }}
+                size="icon"
+                title={t("common.clearFilters", "Clear filters")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <Sheet
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCancel();
+          } else {
+            setIsFormOpen(true);
+          }
+        }}
+      >
+        <SheetContent className="overflow-y-auto sm:max-w-[500px]">
+          <SheetHeader>
+            <SheetTitle>
+              {editingId ? "Edit Transaction" : t("transactions.addTitle")}
+            </SheetTitle>
+            <SheetDescription>
+              {editingId
+                ? "Update the details of your transaction."
+                : "Add a new transaction to your records."}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="px-4 py-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label>{t("categories.typeLabel")}</Label>
+                <RadioGroup
+                  value={type}
+                  onValueChange={(value) => {
+                    setType(value as TransactionType);
+                    setCategoryId("");
+                  }}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="income" id="income" />
+                    <Label htmlFor="income" className="cursor-pointer">
+                      {t("categories.income")}
+                    </Label>
                   </div>
-                </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="expense" id="expense" />
+                    <Label htmlFor="expense" className="cursor-pointer">
+                      {t("categories.expense")}
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="category">
-                    {t("transactions.categoryLabel")}
-                  </Label>
-                  <Select
-                    value={categoryId}
-                    onValueChange={setCategoryId}
+              <div className="space-y-2">
+                <Label htmlFor="amount">{t("transactions.amountLabel")}</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <NumericFormat
+                    customInput={Input}
+                    id="amount"
+                    thousandSeparator=","
+                    decimalScale={2}
+                    placeholder="0.00"
+                    className="pl-8"
+                    value={amount}
+                    onValueChange={(values) => {
+                      setAmount(values.value);
+                    }}
+                    disabled={isFormDisabled}
                     required
-                  >
-                    <SelectTrigger id="category">
-                      <SelectValue
-                        placeholder={t("transactions.selectCategory")}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableCategories.map((cat) => (
-                        <SelectItem key={cat.$id} value={cat.$id}>
-                          {getLocalizedCategoryName(
-                            cat,
-                            i18n.resolvedLanguage || "en",
-                          )}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {availableCategories.length === 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {t("transactions.noCategories", {
-                        type:
-                          type === "income"
-                            ? t("categories.income")
-                            : t("categories.expense"),
-                      })}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Tags</Label>
-                  <MultiSelect
-                    options={
-                      tags?.map((tag) => ({
-                        label: tag.name,
-                        value: tag.$id,
-                      })) || []
-                    }
-                    selected={selectedTags}
-                    onChange={setSelectedTags}
-                    onCreate={handleCreateTag}
-                    placeholder="Select or create tags..."
                   />
                 </div>
+              </div>
 
-                <div className="space-y-2 flex flex-col">
-                  <Label htmlFor="date">{t("transactions.dateLabel")}</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !date && "text-muted-foreground",
+              <div className="space-y-2">
+                <Label htmlFor="category">
+                  {t("transactions.categoryLabel")}
+                </Label>
+                <Select
+                  value={categoryId}
+                  onValueChange={setCategoryId}
+                  required
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue
+                      placeholder={t("transactions.selectCategory")}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableCategories.map((cat) => (
+                      <SelectItem key={cat.$id} value={cat.$id}>
+                        {getLocalizedCategoryName(
+                          cat,
+                          i18n.resolvedLanguage || "en",
                         )}
-                      >
-                        {date ? (
-                          format(date, "PPP", { locale: currentLocale })
-                        ) : (
-                          <span>{t("transactions.dateLabel")}</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                        locale={currentLocale}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {availableCategories.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("transactions.noCategories", {
+                      type:
+                        type === "income"
+                          ? t("categories.income")
+                          : t("categories.expense"),
+                    })}
+                  </p>
+                )}
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">
-                    {t("transactions.descriptionLabel")}
-                  </Label>
-                  <Input
-                    id="description"
-                    placeholder="e.g. Lunch with friends"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  className={cn(
-                    "w-full",
-                    type === "income"
-                      ? "bg-green-600 hover:bg-green-700"
-                      : "bg-red-600 hover:bg-red-700",
-                  )}
-                  disabled={
-                    createTransaction.isPending || updateTransaction.isPending
+              <div className="space-y-2">
+                <Label>Tags</Label>
+                <MultiSelect
+                  options={
+                    tags?.map((tag) => ({
+                      label: tag.name,
+                      value: tag.$id,
+                    })) || []
                   }
-                >
-                  {createTransaction.isPending ||
-                  updateTransaction.isPending ? (
-                    t("transactions.submitting")
-                  ) : (
-                    <>
-                      {editingId ? (
-                        <Pencil className="mr-2 h-4 w-4" />
-                      ) : (
-                        <Plus className="mr-2 h-4 w-4" />
-                      )}
-                      {editingId
-                        ? "Update Transaction"
-                        : t("transactions.submit")}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full mt-2"
-                  onClick={handleCancel}
-                >
-                  <X className="mr-2 h-4 w-4" /> Cancel
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        )}
+                  selected={selectedTags}
+                  onChange={setSelectedTags}
+                  onCreate={handleCreateTag}
+                  placeholder="Select or create tags..."
+                />
+              </div>
 
+              <div className="space-y-2 flex flex-col">
+                <Label htmlFor="date">{t("transactions.dateLabel")}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !date && "text-muted-foreground",
+                      )}
+                    >
+                      {date ? (
+                        format(date, "PPP", { locale: currentLocale })
+                      ) : (
+                        <span>{t("transactions.dateLabel")}</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                      locale={currentLocale}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">
+                  {t("transactions.descriptionLabel")}
+                </Label>
+                <Input
+                  id="description"
+                  placeholder="e.g. Lunch with friends"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className={cn(
+                  "w-full",
+                  type === "income"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-red-600 hover:bg-red-700",
+                )}
+                disabled={
+                  createTransaction.isPending || updateTransaction.isPending
+                }
+              >
+                {createTransaction.isPending || updateTransaction.isPending ? (
+                  t("transactions.submitting")
+                ) : (
+                  <>
+                    {editingId ? (
+                      <Pencil className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Plus className="mr-2 h-4 w-4" />
+                    )}
+                    {editingId
+                      ? "Update Transaction"
+                      : t("transactions.submit")}
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full mt-2"
+                onClick={handleCancel}
+              >
+                <X className="mr-2 h-4 w-4" /> Cancel
+              </Button>
+            </form>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <div className="grid gap-8 grid-cols-1">
         {/* Transactions List */}
         <div className="space-y-4">
           <Card>

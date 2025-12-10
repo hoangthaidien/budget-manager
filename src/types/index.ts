@@ -95,3 +95,12 @@ export type FamilyMemberPayload = {
   user_id: string;
   role?: FamilyRole;
 };
+
+export interface TransactionFilters {
+  search?: string;
+  type?: TransactionType | "all";
+  category_id?: string | "all";
+  tags?: string[];
+  startDate?: Date;
+  endDate?: Date;
+}

@@ -21,6 +21,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { IconPicker, Icon, type IconName } from "@/components/ui/icon-picker";
 
 export default function CategoriesPage() {
@@ -108,123 +115,119 @@ export default function CategoriesPage() {
         )}
       </div>
 
-      <div
-        className={cn(
-          "grid gap-8",
-          isFormOpen ? "md:grid-cols-[350px_1fr]" : "grid-cols-1",
-        )}
-      >
-        {/* Create Category Form */}
-        {isFormOpen && (
-          <Card className="h-fit">
-            <CardHeader>
-              <CardTitle>{t("categories.addTitle")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nameEn">
-                    {t("categories.nameLabel")} (EN)
-                  </Label>
-                  <Input
-                    id="nameEn"
-                    placeholder="e.g. Groceries"
-                    value={nameEn}
-                    onChange={(e) => setNameEn(e.target.value)}
-                    disabled={isFormDisabled}
-                    required
+      <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <SheetContent className="overflow-y-auto sm:max-w-[500px]">
+          <SheetHeader>
+            <SheetTitle>{t("categories.addTitle")}</SheetTitle>
+            <SheetDescription>
+              {t(
+                "categories.addDescription",
+                "Create a new category for your transactions.",
+              )}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="px-4 py-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="nameEn">{t("categories.nameLabel")} (EN)</Label>
+                <Input
+                  id="nameEn"
+                  placeholder="e.g. Groceries"
+                  value={nameEn}
+                  onChange={(e) => setNameEn(e.target.value)}
+                  disabled={isFormDisabled}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nameVi">{t("categories.nameLabel")} (VI)</Label>
+                <Input
+                  id="nameVi"
+                  placeholder="e.g. Ăn uống"
+                  value={nameVi}
+                  onChange={(e) => setNameVi(e.target.value)}
+                  disabled={isFormDisabled}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t("categories.iconLabel", "Icon")}</Label>
+                <div className="flex">
+                  <IconPicker
+                    value={selectedIcon}
+                    onValueChange={setSelectedIcon}
                   />
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="nameVi">
-                    {t("categories.nameLabel")} (VI)
-                  </Label>
-                  <Input
-                    id="nameVi"
-                    placeholder="e.g. Ăn uống"
-                    value={nameVi}
-                    onChange={(e) => setNameVi(e.target.value)}
-                    disabled={isFormDisabled}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>{t("categories.iconLabel", "Icon")}</Label>
-                  <div className="flex">
-                    <IconPicker
-                      value={selectedIcon}
-                      onValueChange={setSelectedIcon}
+              <div className="space-y-2">
+                <Label>{t("categories.typeLabel")}</Label>
+                <RadioGroup
+                  value={newCategoryType}
+                  onValueChange={(value) =>
+                    setNewCategoryType(value as TransactionType)
+                  }
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value="income"
+                      id="income"
+                      disabled={isFormDisabled}
                     />
+                    <Label htmlFor="income" className="cursor-pointer">
+                      {t("categories.income")}
+                    </Label>
                   </div>
-                </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value="expense"
+                      id="expense"
+                      disabled={isFormDisabled}
+                    />
+                    <Label htmlFor="expense" className="cursor-pointer">
+                      {t("categories.expense")}
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
 
-                <div className="space-y-2">
-                  <Label>{t("categories.typeLabel")}</Label>
-                  <RadioGroup
-                    value={newCategoryType}
-                    onValueChange={(value) =>
-                      setNewCategoryType(value as TransactionType)
-                    }
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="income"
-                        id="income"
-                        disabled={isFormDisabled}
-                      />
-                      <Label htmlFor="income" className="cursor-pointer">
-                        {t("categories.income")}
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="expense"
-                        id="expense"
-                        disabled={isFormDisabled}
-                      />
-                      <Label htmlFor="expense" className="cursor-pointer">
-                        {t("categories.expense")}
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={createCategory.isPending || isFormDisabled}
-                >
-                  {createCategory.isPending ? (
-                    t("categories.submitting")
-                  ) : (
-                    <>
-                      <Plus className="mr-2 h-4 w-4" /> {t("categories.submit")}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full mt-2"
-                  onClick={() => setIsFormOpen(false)}
-                >
-                  <X className="mr-2 h-4 w-4" /> Cancel
-                </Button>
-                {isFormDisabled && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    {t(
-                      "categories.familyRequiredHint",
-                      "You must select a family before adding categories.",
-                    )}
-                  </p>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={createCategory.isPending || isFormDisabled}
+              >
+                {createCategory.isPending ? (
+                  t("categories.submitting")
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" /> {t("categories.submit")}
+                  </>
                 )}
-              </form>
-            </CardContent>
-          </Card>
-        )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full mt-2"
+                onClick={() => setIsFormOpen(false)}
+              >
+                <X className="mr-2 h-4 w-4" /> Cancel
+              </Button>
+              {isFormDisabled && (
+                <p className="text-xs text-muted-foreground text-center">
+                  {t(
+                    "categories.familyRequiredHint",
+                    "You must select a family before adding categories.",
+                  )}
+                </p>
+              )}
+            </form>
+          </div>
+        </SheetContent>
+      </Sheet>
 
+      <div className="grid gap-8 grid-cols-1">
         {/* Categories List */}
         <div className="space-y-6">
           {/* Income Section */}

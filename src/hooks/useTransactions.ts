@@ -1,12 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { transactionsService } from "@/services/transactions";
 import { QUERY_KEYS } from "@/lib/constants";
-import type { TransactionPayload } from "@/types";
+import type { TransactionPayload, TransactionFilters } from "@/types";
 
-export function useTransactions(familyId: string | undefined) {
+export function useTransactions(
+  familyId: string | undefined,
+  filters?: TransactionFilters,
+) {
   return useQuery({
-    queryKey: [QUERY_KEYS.TRANSACTIONS, familyId],
-    queryFn: () => transactionsService.list(familyId!),
+    queryKey: [QUERY_KEYS.TRANSACTIONS, familyId, filters],
+    queryFn: () => transactionsService.list(familyId!, filters),
     enabled: !!familyId,
   });
 }
