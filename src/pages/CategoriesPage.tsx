@@ -9,10 +9,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Trash2, Plus, ArrowUpCircle, ArrowDownCircle, X } from "lucide-react";
 import type { TransactionType } from "@/types";
-import { cn } from "@/lib/utils";
+// import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { createLocalizedString, getCategoryName } from "@/lib/i18n-utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
