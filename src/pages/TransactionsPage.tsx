@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamily } from "@/contexts/FamilyContext";
@@ -12,6 +13,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useTags, useCreateTag } from "@/hooks/useTags";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Icon, type IconName } from "@/components/ui/icon-picker";
@@ -55,7 +57,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
 import { NumericFormat } from "react-number-format";
 
@@ -657,7 +658,7 @@ export default function TransactionsPage() {
                 <Label htmlFor="description">
                   {t("transactions.descriptionLabel")}
                 </Label>
-                <Input
+                <Textarea
                   id="description"
                   placeholder="e.g. Lunch with friends"
                   value={description}
@@ -722,9 +723,10 @@ export default function TransactionsPage() {
                   Object.entries(
                     transactions?.reduce(
                       (groups, transaction) => {
-                        const date = new Date(transaction.date)
-                          .toISOString()
-                          .split("T")[0];
+                        const date = format(
+                          new Date(transaction.date),
+                          "yyyy-MM-dd",
+                        );
                         if (!groups[date]) {
                           groups[date] = [];
                         }
@@ -749,7 +751,7 @@ export default function TransactionsPage() {
                         <div key={date} className="space-y-2">
                           <h3 className="text-sm font-medium text-muted-foreground bg-muted/30 p-2 rounded-md sticky top-0 backdrop-blur-sm z-10 flex justify-between items-center">
                             <span>
-                              {new Date(date).toLocaleDateString(
+                              {new Date(date + "T00:00:00").toLocaleDateString(
                                 i18n.resolvedLanguage,
                                 {
                                   weekday: "short",

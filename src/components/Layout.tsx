@@ -89,7 +89,7 @@ export default function Layout() {
                     Mobile navigation menu
                   </SheetDescription>
                 </SheetHeader>
-                <div className="flex flex-col gap-6 py-6">
+                <div className="flex flex-col gap-6 py-6 px-4">
                   <div className="lg:hidden">
                     <FamilySwitcher />
                   </div>
