@@ -13,6 +13,7 @@ export const transactionsService = {
       Query.equal("family_id", familyId),
       Query.orderDesc("date"),
       Query.orderDesc("$createdAt"),
+      Query.limit(1000),
     ];
 
     if (filters) {

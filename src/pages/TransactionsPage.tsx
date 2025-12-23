@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamily } from "@/contexts/FamilyContext";
@@ -195,7 +195,10 @@ export default function TransactionsPage() {
   const [filterType, setFilterType] = useState<TransactionType | "all">("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterTags, setFilterTags] = useState<string[]>([]);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  });
 
   const { data: rawTransactions, isLoading: isLoadingTransactions } =
     useTransactions(activeFamilyId ?? undefined, {

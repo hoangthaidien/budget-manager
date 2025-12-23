@@ -8,7 +8,11 @@ export const tagsService = {
     const response = await tablesDB.listRows<Tag>({
       databaseId: DATABASE_ID,
       tableId: COLLECTIONS.TAGS,
-      queries: [Query.equal("family_id", familyId), Query.orderAsc("name")],
+      queries: [
+        Query.equal("family_id", familyId),
+        Query.orderAsc("name"),
+        Query.limit(1000),
+      ],
     });
     return response.rows;
   },

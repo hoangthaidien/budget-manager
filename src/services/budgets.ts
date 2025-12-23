@@ -11,6 +11,7 @@ export const budgetsService = {
       queries: [
         Query.equal("family_id", familyId),
         Query.orderDesc("$createdAt"),
+        Query.limit(1000),
       ],
     });
     return response.rows;

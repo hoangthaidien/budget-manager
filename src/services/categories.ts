@@ -8,7 +8,11 @@ export const categoriesService = {
     const response = await tablesDB.listRows<Category>({
       databaseId: DATABASE_ID,
       tableId: COLLECTIONS.CATEGORIES,
-      queries: [Query.equal("family_id", familyId), Query.orderAsc("name")],
+      queries: [
+        Query.equal("family_id", familyId),
+        Query.orderAsc("name"),
+        Query.limit(1000),
+      ],
     });
     return response.rows;
   },
