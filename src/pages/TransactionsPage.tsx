@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
-import type { DateRange } from "react-day-picker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamily } from "@/contexts/FamilyContext";
 import {
@@ -25,14 +24,13 @@ import {
   Tag as TagIcon,
   Pencil,
   X,
-  Search,
-  Filter,
 } from "lucide-react";
-import type { Transaction, TransactionType, Category, Tag } from "@/types";
+import type { Transaction, TransactionType, Category } from "@/types";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 import { getCategoryName as getLocalizedCategoryName } from "@/lib/i18n-utils";
+import { TransactionsFilters } from "@/components/TransactionsFilters";
 import {
   Select,
   SelectContent,
@@ -51,7 +49,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import { Calendar } from "@/components/ui/calendar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -60,153 +57,45 @@ import { Badge } from "@/components/ui/badge";
 import { vi, enUS } from "date-fns/locale";
 import { NumericFormat } from "react-number-format";
 
-interface FilterControlsProps {
-  filterType: TransactionType | "all";
-  setFilterType: (value: TransactionType | "all") => void;
-  filterCategory: string;
-  setFilterCategory: (value: string) => void;
-  categories: Category[] | undefined;
-  filterTags: string[];
-  setFilterTags: (value: string[]) => void;
-  tags: Tag[] | undefined;
-  dateRange: DateRange | undefined;
-  setDateRange: (value: DateRange | undefined) => void;
-  fullWidth?: boolean;
-}
-
-function FilterControls({
-  filterType,
-  setFilterType,
-  filterCategory,
-  setFilterCategory,
-  categories,
-  filterTags,
-  setFilterTags,
-  tags,
-  dateRange,
-  setDateRange,
-  fullWidth = false,
-}: FilterControlsProps) {
-  const { t, i18n } = useTranslation();
-
-  return (
-    <>
-      <Select
-        value={filterType}
-        onValueChange={(value) =>
-          setFilterType(value as TransactionType | "all")
-        }
-      >
-        <SelectTrigger className={cn(fullWidth ? "w-full" : "w-[180px]")}>
-          <SelectValue placeholder={t("categories.typeLabel")} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">
-            {t("common.allTypes", "All Types")}
-          </SelectItem>
-          <SelectItem value="income">{t("categories.income")}</SelectItem>
-          <SelectItem value="expense">{t("categories.expense")}</SelectItem>
-        </SelectContent>
-      </Select>
-
-      <Select value={filterCategory} onValueChange={setFilterCategory}>
-        <SelectTrigger className={cn(fullWidth ? "w-full" : "w-[200px]")}>
-          <SelectValue placeholder={t("transactions.categoryLabel")} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">
-            {t("common.allCategories", "All Categories")}
-          </SelectItem>
-          {categories?.map((cat) => (
-            <SelectItem key={cat.$id} value={cat.$id}>
-              {getLocalizedCategoryName(cat, i18n.resolvedLanguage || "en")}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <div className={cn(fullWidth ? "w-full" : "w-[200px]")}>
-        <MultiSelect
-          options={
-            tags?.map((tag) => ({
-              label: tag.name,
-              value: tag.$id,
-            })) || []
-          }
-          selected={filterTags}
-          onChange={setFilterTags}
-          placeholder={t("transactions.filterTags", "Filter by tags")}
-        />
-      </div>
-
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant={"outline"}
-            className={cn(
-              fullWidth ? "w-full" : "w-60",
-              "justify-start text-left font-normal",
-              !dateRange && "text-muted-foreground",
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {dateRange?.from ? (
-              dateRange.to ? (
-                <>
-                  {format(dateRange.from, "LLL dd, y")} -{" "}
-                  {format(dateRange.to, "LLL dd, y")}
-                </>
-              ) : (
-                format(dateRange.from, "LLL dd, y")
-              )
-            ) : (
-              <span>{t("common.pickDateRange", "Pick a date range")}</span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="end">
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={dateRange?.from}
-            selected={dateRange}
-            onSelect={setDateRange}
-            numberOfMonths={2}
-          />
-        </PopoverContent>
-      </Popover>
-    </>
-  );
-}
+type RequiredDateRange = { from: Date; to: Date };
 
 export default function TransactionsPage() {
   const { t, i18n } = useTranslation();
   const formatCurrency = useCurrencyFormatter();
   const { user } = useAuth();
   const { activeFamilyId, isOwnerOfActiveFamily } = useFamily();
+  // Draft filters (UI state) — only applied when user clicks "Search"
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 500);
-    return () => clearTimeout(timer);
-  }, [search]);
-
   const [filterType, setFilterType] = useState<TransactionType | "all">("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterTags, setFilterTags] = useState<string[]>([]);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+  const defaultDateRange: RequiredDateRange = {
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
-  });
+  };
+
+  const [dateRange, setDateRange] = useState<RequiredDateRange>(defaultDateRange);
+
+  // Applied filters — drive data fetching / list filtering
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [appliedFilterType, setAppliedFilterType] = useState<
+    TransactionType | "all"
+  >(filterType);
+  const [appliedFilterCategory, setAppliedFilterCategory] =
+    useState<string>(filterCategory);
+  const [appliedFilterTags, setAppliedFilterTags] = useState<string[]>(
+    filterTags,
+  );
+  const [appliedDateRange, setAppliedDateRange] =
+    useState<RequiredDateRange>(dateRange);
 
   const { data: rawTransactions, isLoading: isLoadingTransactions } =
     useTransactions(activeFamilyId ?? undefined, {
-      type: filterType,
-      category_id: filterCategory,
-      tags: filterTags,
-      startDate: dateRange?.from,
-      endDate: dateRange?.to,
+      type: appliedFilterType,
+      category_id: appliedFilterCategory,
+      tags: appliedFilterTags,
+      startDate: appliedDateRange.from,
+      endDate: appliedDateRange.to,
     });
 
   const { data: categories } = useCategories(activeFamilyId ?? undefined);
@@ -215,8 +104,8 @@ export default function TransactionsPage() {
   const currentLocale = i18n.language === "vi" ? vi : enUS;
 
   const transactions = rawTransactions?.filter((t) => {
-    if (!debouncedSearch) return true;
-    const searchLower = debouncedSearch.toLowerCase();
+    if (!appliedSearch) return true;
+    const searchLower = appliedSearch.toLowerCase();
     const category =
       typeof t.category_id === "object"
         ? t.category_id
@@ -230,6 +119,28 @@ export default function TransactionsPage() {
       categoryName.toLowerCase().includes(searchLower)
     );
   });
+
+  const applyFilters = () => {
+    setAppliedSearch(search);
+    setAppliedFilterType(filterType);
+    setAppliedFilterCategory(filterCategory);
+    setAppliedFilterTags(filterTags);
+    setAppliedDateRange(dateRange);
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setFilterType("all");
+    setFilterCategory("all");
+    setFilterTags([]);
+
+    setAppliedSearch("");
+    setAppliedFilterType("all");
+    setAppliedFilterCategory("all");
+    setAppliedFilterTags([]);
+    // Keep required date range as-is
+    setAppliedDateRange(dateRange);
+  };
 
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
@@ -386,120 +297,22 @@ export default function TransactionsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-4 mb-6">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t(
-                "transactions.searchPlaceholder",
-                "Search transactions...",
-              )}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8"
-            />
-          </div>
-
-          {/* Mobile Filter Button */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="md:hidden shrink-0"
-              >
-                <Filter className="h-4 w-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent
-              side="left"
-              className="w-[300px] sm:w-[400px] overflow-y-auto"
-            >
-              <SheetHeader>
-                <SheetTitle>{t("common.filters", "Filters")}</SheetTitle>
-                <SheetDescription>
-                  {t(
-                    "transactions.filterDescription",
-                    "Refine your transaction list.",
-                  )}
-                </SheetDescription>
-              </SheetHeader>
-              <div className="p-4 space-y-4 flex flex-col">
-                <FilterControls
-                  filterType={filterType}
-                  setFilterType={setFilterType}
-                  filterCategory={filterCategory}
-                  setFilterCategory={setFilterCategory}
-                  categories={categories}
-                  filterTags={filterTags}
-                  setFilterTags={setFilterTags}
-                  tags={tags}
-                  dateRange={dateRange}
-                  setDateRange={setDateRange}
-                  fullWidth
-                />
-                {(search ||
-                  filterType !== "all" ||
-                  filterCategory !== "all" ||
-                  filterTags.length > 0 ||
-                  dateRange) && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSearch("");
-                      setFilterType("all");
-                      setFilterCategory("all");
-                      setFilterTags([]);
-                      setDateRange(undefined);
-                    }}
-                    className="w-full"
-                  >
-                    <X className="mr-2 h-4 w-4" />{" "}
-                    {t("common.clearFilters", "Clear filters")}
-                  </Button>
-                )}
-              </div>
-            </SheetContent>
-          </Sheet>
-
-          {/* Desktop Filters */}
-          <div className="hidden md:flex gap-2 items-center">
-            <FilterControls
-              filterType={filterType}
-              setFilterType={setFilterType}
-              filterCategory={filterCategory}
-              setFilterCategory={setFilterCategory}
-              categories={categories}
-              filterTags={filterTags}
-              setFilterTags={setFilterTags}
-              tags={tags}
-              dateRange={dateRange}
-              setDateRange={setDateRange}
-            />
-            {(search ||
-              filterType !== "all" ||
-              filterCategory !== "all" ||
-              filterTags.length > 0 ||
-              dateRange) && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setSearch("");
-                  setFilterType("all");
-                  setFilterCategory("all");
-                  setFilterTags([]);
-                  setDateRange(undefined);
-                }}
-                size="icon"
-                title={t("common.clearFilters", "Clear filters")}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+      <TransactionsFilters
+        search={search}
+        setSearch={setSearch}
+        filterType={filterType}
+        setFilterType={setFilterType}
+        filterCategory={filterCategory}
+        setFilterCategory={setFilterCategory}
+        filterTags={filterTags}
+        setFilterTags={setFilterTags}
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+        categories={categories}
+        tags={tags}
+        onApply={applyFilters}
+        onClear={clearFilters}
+      />
 
       <Sheet
         open={isFormOpen}

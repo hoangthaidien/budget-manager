@@ -1,0 +1,15 @@
+{
+  // Cloudflare Wrangler configuration
+  // Deploy command (after build):
+  //   npm run build
+  //   npx wrangler deploy
+  "name": "budget-manager",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-01-03",
+
+  // Serve Vite build output as static assets
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  }
+}
