@@ -71,3 +71,48 @@ export default defineConfig([
   },
 ])
 ```
+
+  ## Deploy to Cloudflare Pages
+
+  This project is a Vite SPA. For Cloudflare Pages, the key settings are:
+
+  - Build command: `npm run build`
+  - Build output directory: `dist`
+  - SPA routing fallback: add a `_redirects` file (already included at `public/_redirects`)
+
+  ### Option A: Deploy via Cloudflare Dashboard (recommended)
+
+  1. Push the repo to GitHub/GitLab.
+  2. In Cloudflare Dashboard → **Pages** → **Create a project** → connect your repo.
+  3. In **Build settings**:
+    - Framework preset: **Vite**
+    - Build command: `npm run build`
+    - Build output directory: `dist`
+  4. In **Environment variables**, add the variables used by the app (see `src/lib/appwrite.ts` and `src/lib/constants.ts`):
+    - `VITE_APPWRITE_ENDPOINT`
+    - `VITE_APPWRITE_PROJECT_ID`
+    - `VITE_APPWRITE_DATABASE_ID`
+    - `VITE_APPWRITE_COLLECTION_FAMILIES_ID`
+    - `VITE_APPWRITE_COLLECTION_FAMILY_MEMBERS_ID`
+    - `VITE_APPWRITE_COLLECTION_CATEGORIES_ID`
+    - `VITE_APPWRITE_COLLECTION_TRANSACTIONS_ID`
+    - `VITE_APPWRITE_COLLECTION_BUDGETS_ID`
+    - `VITE_APPWRITE_COLLECTION_TAGS_ID`
+
+  Cloudflare Pages will rebuild and redeploy on every push.
+
+  ### Option B: Deploy from your machine with Wrangler
+
+  ```bash
+  npm run build
+  npx wrangler pages deploy dist
+  ```
+
+  ### Custom domain
+
+  In Cloudflare Dashboard → **Pages** → your project → **Custom domains**:
+
+  - Add your domain/subdomain (e.g. `app.example.com` or `example.com`).
+  - If your domain is already on Cloudflare DNS, it can usually auto-configure the DNS records.
+  - Once active, Pages will serve your site on that domain.
+
